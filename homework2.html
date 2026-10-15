@@ -55,7 +55,7 @@ Checksummed Address
         <h2>BIP-39</h2>
 
         <p>
-            BIP-39 was introduced in 2013 to provide a human-friendly method of backing up cryptocurrency wallets. 
+            BIP-39 was introduced to provide a human-friendly method of backing up cryptocurrency wallets. 
             Instead of recording long hexadecimal strings, users can store a list of 12, 15, 18, 21, or 24 words.<br>
             For example: "fish dolphin shark sea ..."<br>
             The mnemonic is then converted into a binary seed that can be used for deterministic wallet generation.
@@ -68,6 +68,8 @@ Checksummed Address
         <h2>BIP-32</h2>
 
         <p>
+            This is a key derivation algorithm, which means BIP-32 outputs new keys based on an input key.
+            It is different from a key generation algorithm which starts from randomness to generate a key.<br>
             BIP-32 introduced Hierarchical Deterministic (HD) wallets. 
             Instead of generating unrelated private keys, a single master seed can deterministically generate an entire tree of keys.<br>
             This means one backup phrase can be used to recover every account/address that belongs to a wallet.
@@ -80,6 +82,7 @@ Checksummed Address
         <h2>BIP-44</h2>
 
         <p>
+            Just as BIP-32, BIP-44 is a key derivation algorithm.
             BIP-44 standardized how HD wallets organize derived keys. It defines a path structure:<br>
             m / purpose' / coin_type' / account_number' / change / address_index<br>
             The path used in Ethereum is: m / 44'/ 60'/ 0'/ 0 / 0; where: 44' = BIP-44, 60' = Ethereum coin type, 0' = first account, 
@@ -105,6 +108,7 @@ Checksummed Address
         <h2>Keccak-256</h2>
 
         <p>
+            This is a cryptographic hashing algorithm. That means that this algorithm provides: determinism, collision resistance and avalanche effect.<br>
             Ethereum uses Keccak-256 to derive addresses from public keys by hashing the public key and
             using the last 20 bytes of the resulting hash as the address.
         </p>
@@ -133,6 +137,8 @@ Checksummed Address
             which is able to provide all that's needed for Ethereum's system to work properly.<br>
             Every cryptographic primitive used serves best the purpose it is required to fulfill.
         </p>
+        
+    </div>
 
     <div class="card">
 
@@ -147,9 +153,7 @@ Checksummed Address
             <li>2015 - SHA-3</li>
             <li>2016 - EIP-55</li>
         </ul>
-
-    </div>
-
+    
     </div>
 
 </div>
