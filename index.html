@@ -3,39 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECC Toy Example</title>
+    <title>ECC Toy Curve Visualization</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <h1>Elliptic Curve Cryptography Demo</h1>
+    <h1>Elliptic Curve Public-Key Generation</h1>
 
-        <p class="description">
-            Demonstration of public key generation using elliptic-curve
-            scalar multiplication on the toy curve:
-        </p>
+    <p class="subtitle">
+        Ethereum-style ECC demonstration using the toy curve
+        y² = x³ + 7 (mod 17)
+    </p>
 
-        <div class="equation">
-            y² = x³ + 7 (mod 17)
+    <div class="card">
+
+        <div class="controls">
+
+            <label>
+                Private Key (k):
+                <input type="number" id="privateKey" min="1" value="6">
+            </label>
+
+            <label>
+                Speed:
+                <select id="speed">
+                    <option value="1000">1x</option>
+                    <option value="500">2x</option>
+                    <option value="250">4x</option>
+                </select>
+            </label>
+
+            <button id="startBtn">
+                Start Animation
+            </button>
+
         </div>
 
-        <div class="info">
-            <p><strong>Base Point (G):</strong> (1, 5)</p>
-            <p><strong>Private Key (k):</strong> 6</p>
+        <div class="parameters">
+            <p><strong>Curve:</strong> y² = x³ + 7 (mod 17)</p>
+            <p><strong>Base Point G:</strong> (1,5)</p>
         </div>
-
-        <h2>Scalar Multiplication Steps</h2>
-
-        <div id="steps"></div>
-
-        <h2>Toy Public Key</h2>
-
-        <div id="result"></div>
 
     </div>
 
-    <script src="script.js"></script>
+    <div class="visual-section">
+
+        <div class="canvas-panel">
+
+            <h2>Curve Visualization</h2>
+
+            <canvas id="curveCanvas"
+                    width="650"
+                    height="650">
+            </canvas>
+
+        </div>
+
+        <div class="log-panel">
+
+            <h2>Computation Log</h2>
+
+            <div id="log"></div>
+
+        </div>
+
+    </div>
+
+    <div id="finalResult" class="resultBox"></div>
+
+</div>
+
+<script src="script.js"></script>
+
 </body>
 </html>
