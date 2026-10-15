@@ -1,211 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Homework 1 - Toy ECC Public Key Generator</title>
-
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 20px;
-}
-
-.container {
-    max-width: 900px;
-    margin: auto;
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-h1, h2 {
-    color: #333;
-}
-
-.info {
-    background: #eef5ff;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-#output {
-    background: #f7f7f7;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 8px;
-    white-space: pre-wrap;
-    font-family: Consolas, monospace;
-}
-
-button {
-    padding: 10px 20px;
-    border: none;
-    background: #0066cc;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-button:hover {
-    background: #004fa3;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECC Toy Example</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
+    <div class="container">
 
-    <h1>Homework 1 - Toy Elliptic Curve Cryptography</h1>
+        <h1>Elliptic Curve Cryptography Demo</h1>
 
-    <div class="info">
-        <strong>Student:</strong> Your Name<br>
-        <strong>Course:</strong> Statistics<br>
-        <strong>Program:</strong> MSc Cybersecurity
+        <p class="description">
+            Demonstration of public key generation using elliptic-curve
+            scalar multiplication on the toy curve:
+        </p>
+
+        <div class="equation">
+            y² = x³ + 7 (mod 17)
+        </div>
+
+        <div class="info">
+            <p><strong>Base Point (G):</strong> (1, 5)</p>
+            <p><strong>Private Key (k):</strong> 6</p>
+        </div>
+
+        <h2>Scalar Multiplication Steps</h2>
+
+        <div id="steps"></div>
+
+        <h2>Toy Public Key</h2>
+
+        <div id="result"></div>
+
     </div>
 
-    <h2>Curve Parameters</h2>
-
-    <p>
-        Curve:
-        <strong>y² = x³ + 7 (mod 17)</strong>
-    </p>
-
-    <p>
-        Base Point:
-        <strong>G = (1, 5)</strong>
-    </p>
-
-    <p>
-        Private Key:
-        <strong>k = 6</strong>
-    </p>
-
-    <button onclick="runExample()">Generate Public Key</button>
-
-    <h2>Results</h2>
-
-    <div id="output">
-Click the button to compute kG.
-    </div>
-
-</div>
-
-<script>
-
-const p = 17;
-
-const G = {
-    x: 1,
-    y: 5
-};
-
-const privateKey = 6;
-
-function mod(n, p) {
-    return ((n % p) + p) % p;
-}
-
-function invMod(a, p) {
-
-    a = mod(a, p);
-
-    for (let i = 1; i < p; i++) {
-        if (mod(a * i, p) === 1) {
-            return i;
-        }
-    }
-
-    throw new Error("Inverse does not exist");
-}
-
-function pointAdd(P, Q) {
-
-    if (P === null) return Q;
-    if (Q === null) return P;
-
-    let lambda;
-
-    if (P.x === Q.x && P.y === Q.y) {
-
-        lambda = mod(
-            (3 * P.x * P.x) * invMod(2 * P.y, p),
-            p
-        );
-
-    } else {
-
-        lambda = mod(
-            (Q.y - P.y) * invMod(Q.x - P.x, p),
-            p
-        );
-    }
-
-    const xr = mod(
-        lambda * lambda - P.x - Q.x,
-        p
-    );
-
-    const yr = mod(
-        lambda * (P.x - xr) - P.y,
-        p
-    );
-
-    return {
-        x: xr,
-        y: yr
-    };
-}
-
-function scalarMultiply(k, P) {
-
-    let result = null;
-
-    for (let i = 0; i < k; i++) {
-        result = pointAdd(result, P);
-    }
-
-    return result;
-}
-
-function runExample() {
-
-    let text = "";
-
-    text += "Toy Elliptic Curve Example\n";
-    text += "==========================\n\n";
-
-    text += "Curve: y² = x³ + 7 (mod 17)\n";
-    text += `Base Point G = (${G.x}, ${G.y})\n`;
-    text += `Private Key k = ${privateKey}\n\n`;
-
-    let current = null;
-
-    for (let i = 1; i <= privateKey; i++) {
-
-        current = pointAdd(current, G);
-
-        text += `${i}G = (${current.x}, ${current.y})\n`;
-    }
-
-    const publicKey =
-        scalarMultiply(privateKey, G);
-
-    text += "\n";
-    text += "TOY PUBLIC KEY\n";
-    text += "==============\n";
-    text += `Q = ${privateKey}G = (${publicKey.x}, ${publicKey.y})`;
-
-    document.getElementById("output").textContent = text;
-}
-
-</script>
-
+    <script src="script.js"></script>
 </body>
 </html>
