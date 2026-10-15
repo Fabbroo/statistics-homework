@@ -1,0 +1,58 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7fb;
+    margin: 0;
+    padding: 30px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #1f3c88;
+}
+
+h2 {
+    color: #1f3c88;
+    margin-top: 30px;
+}
+
+.description {
+    text-align: center;
+}
+
+.equation {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.info {
+    background: #eef4ff;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.step {
+    padding: 10px;
+    margin: 8px 0;
+    background: #f8f8f8;
+    border-left: 4px solid #1f3c88;
+}
+
+#result {
+    font-size: 24px;
+    font-weight: bold;
+    color: green;
+    padding: 15px;
+    background: #eefcee;
+    border-radius: 8px;
+}
