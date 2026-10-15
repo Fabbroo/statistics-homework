@@ -27,9 +27,11 @@
         <h2>Overview</h2>
 
         <p>
-            Ethereum wallets transform a mnemonic phrase into an Ethereum
-            address through a sequence of cryptographic standards and
-            primitives.
+            Ethereum wallets do not directly generate an address from a password or from a single cryptographic algorithm. 
+            Instead, they use a pipeline of specialized standards and cryptographic primitives, each designed for a different purpose.
+            The process starts with a human-readable mnemonic phrase and ends with a checksummed Ethereum address.<br>
+            The main stages are: mnemonic generation (BIP-39), hierarchical key derivation (BIP-32 and BIP-44), 
+            public-key cryptography (secp256k1), hashing (Keccak-256), and checksum encoding (EIP-55).
         </p>
 
         <pre>
@@ -53,7 +55,10 @@ Checksummed Address
         <h2>BIP-39</h2>
 
         <p>
-            Mnemonic sentence generation and conversion into a seed.
+            BIP-39 was introduced in 2013 to provide a human-friendly method of backing up cryptocurrency wallets. 
+            Instead of recording long hexadecimal strings, users can store a list of 12, 15, 18, 21, or 24 words.<br>
+            For example: "fish dolphin shark sea ..."<br>
+            The mnemonic is then converted into a binary seed that can be used for deterministic wallet generation.
         </p>
 
     </div>
