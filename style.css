@@ -137,3 +137,23 @@ th {
     background: #1f3c88;
     color: white;
 }
+
+.navigation {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.navigation a {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 10px 18px;
+    background: #1f3c88;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.navigation a:hover {
+    background: #2952b8;
+}
