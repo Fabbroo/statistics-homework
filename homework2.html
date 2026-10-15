@@ -68,7 +68,9 @@ Checksummed Address
         <h2>BIP-32</h2>
 
         <p>
-            Hierarchical deterministic key derivation.
+            BIP-32 introduced Hierarchical Deterministic (HD) wallets. 
+            Instead of generating unrelated private keys, a single master seed can deterministically generate an entire tree of keys.<br>
+            This means one backup phrase can be used to recover every account/address that belongs to a wallet.
         </p>
 
     </div>
@@ -78,7 +80,10 @@ Checksummed Address
         <h2>BIP-44</h2>
 
         <p>
-            Standard derivation paths and wallet organization.
+            BIP-44 standardized how HD wallets organize derived keys. It defines a path structure:<br>
+            m / purpose' / coin_type' / account_number' / change / address_index<br>
+            The path used in Ethereum is: m / 44'/ 60'/ 0'/ 0 / 0; where: 44' = BIP-44, 60' = Ethereum coin type, 0' = first account, 
+            0 = external addresses, 0 = first address.
         </p>
 
     </div>
@@ -88,7 +93,9 @@ Checksummed Address
         <h2>secp256k1</h2>
 
         <p>
-            Public-key cryptography and digital signatures.
+            For public-key cryptography, Ethereum uses the elliptic curve secp256k1.<br>
+            The private key k is a 256-bit integer and the corresponding public key is obtained through elliptic-curve scalar multiplication: Q = kG.<br>
+            The security relies on the Elliptic Curve Discrete Logarithm Problem (ECDLP), which makes recovering k from Q computationally infeasible.
         </p>
 
     </div>
@@ -98,7 +105,8 @@ Checksummed Address
         <h2>Keccak-256</h2>
 
         <p>
-            Hashing and Ethereum address derivation.
+            Ethereum uses Keccak-256 to derive addresses from public keys by hashing the public key and
+            using the last 20 bytes of the resulting hash as the address.
         </p>
 
     </div>
@@ -108,10 +116,23 @@ Checksummed Address
         <h2>EIP-55</h2>
 
         <p>
-            Mixed-case checksum addresses.
+            Ethereum addresses are usually written in hexadecimal, for example:<br>
+            0x742d35Cc6634C0532925a3b844Bc454e4438f44e<br>
+            EIP-55 uses uppercase and lowercase letters as a checksum mechanism. The capitalization pattern is derived from a hash of the address itself.
+            If a user accidentally changes or mistypes a character, the checksum is likely to fail. So it protects against human error.
         </p>
 
     </div>
+
+    <div class="card">
+
+        <h2>Why Ethereum uses multiple cryptographic techniques?</h2>
+
+        <p>
+            Ethereum uses multiple cryptographic techniques because there isn't a single cryptographic primitive
+            which is able to provide all that's needed for Ethereum's system to work properly.<br>
+            Every cryptographic primitive used serves best the purpose it is required to fulfill.
+        </p>
 
     <div class="card">
 
@@ -128,15 +149,6 @@ Checksummed Address
         </ul>
 
     </div>
-
-    <div class="card">
-
-        <h2>Discussion</h2>
-
-        <p>
-            Why Ethereum uses multiple cryptographic techniques instead
-            of a single algorithm.
-        </p>
 
     </div>
 
