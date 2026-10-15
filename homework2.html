@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 2 - Ethereum Wallet Pipeline</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>From Wallet Seed to Ethereum Address</h1>
+
+    <div class="navigation">
+        <a href="index.html">Homework 1 - ECC Demo</a>
+        <a href="homework2.html">Homework 2 - Wallet Pipeline</a>
+    </div>
+
+    <p class="subtitle">
+        Analysis of the cryptographic pipeline used in Ethereum wallets.
+    </p>
+
+    <div class="card">
+
+        <h2>Overview</h2>
+
+        <p>
+            Ethereum wallets transform a mnemonic phrase into an Ethereum
+            address through a sequence of cryptographic standards and
+            primitives.
+        </p>
+
+        <pre>
+Mnemonic
+    ↓ BIP-39
+Seed
+    ↓ BIP-32 / BIP-44
+Private Key
+    ↓ secp256k1
+Public Key
+    ↓ Keccak-256
+Ethereum Address
+    ↓ EIP-55
+Checksummed Address
+        </pre>
+
+    </div>
+
+    <div class="card">
+
+        <h2>BIP-39</h2>
+
+        <p>
+            Mnemonic sentence generation and conversion into a seed.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h2>BIP-32</h2>
+
+        <p>
+            Hierarchical deterministic key derivation.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h2>BIP-44</h2>
+
+        <p>
+            Standard derivation paths and wallet organization.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h2>secp256k1</h2>
+
+        <p>
+            Public-key cryptography and digital signatures.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Keccak-256</h2>
+
+        <p>
+            Hashing and Ethereum address derivation.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h2>EIP-55</h2>
+
+        <p>
+            Mixed-case checksum addresses.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Historical Timeline</h2>
+
+        <ul>
+            <li>1977 - RSA</li>
+            <li>2001 - SHA-2 / SHA-512</li>
+            <li>2012 - BIP-32</li>
+            <li>2013 - BIP-39</li>
+            <li>2014 - BIP-44</li>
+            <li>2015 - SHA-3</li>
+            <li>2016 - EIP-55</li>
+        </ul>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Discussion</h2>
+
+        <p>
+            Why Ethereum uses multiple cryptographic techniques instead
+            of a single algorithm.
+        </p>
+
+    </div>
+
+</div>
+
+</body>
+</html>
