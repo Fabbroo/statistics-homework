@@ -24,7 +24,13 @@
 
     <div class="card">
 
-        <h2>Overview</h2>
+        <h2>Public key </h2>
+    
+    </div>
+    
+    <div class="card">
+
+        <h2>Overview of Etherium</h2>
 
         <p>
             Ethereum wallets do not directly generate an address from a password or from a single cryptographic algorithm. 
@@ -109,7 +115,11 @@ Checksummed Address
 
         <p>
             This is a cryptographic hashing algorithm. That means that this algorithm provides: determinism, collision resistance and avalanche effect.<br>
-            Ethereum uses Keccak-256 to derive addresses from public keys by hashing the public key and
+            Keccak-256 and SHA3-256 belong to the same family of cryptographic hash functions and share the same underlying sponge construction. 
+            However, SHA3-256 is the standardized version published by NIST in 2015 and uses a different padding/domain-separation scheme. 
+            Consequently, the two algorithms generate different hashes for the same input. 
+            Ethereum adopted Keccak-256 before the SHA-3 standard was finalized and therefore continues to use Keccak-256 for address derivation and other hashing operations.<br>
+            Keccak-256 is used to derive addresses from public keys by hashing the public key and
             using the last 20 bytes of the resulting hash as the address.
         </p>
 
