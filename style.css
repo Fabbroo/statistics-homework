@@ -100,3 +100,40 @@ canvas {
     border-radius: 12px;
     text-align: center;
 }
+
+.charts {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.chart-container {
+    flex: 1;
+    min-width: 400px;
+}
+
+#bitStats,
+#avalancheTable,
+#discussionBox {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f8f8f8;
+    border-radius: 10px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    background: #1f3c88;
+    color: white;
+}
