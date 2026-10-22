@@ -1,85 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Homework 3 - Cryptography and Statistical Cryptanalysis</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homework 3 - Cryptography and Statistics</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
+
 <div class="container">
-  <header>
-    <div class="navigation"><a href="index.html">Back to Home</a></div>
-    <h1>Homework 3</h1>
-    <p class="subtitle">Toy ECC encryption, Caesar cipher, and attacks on restricted key spaces</p>
-  </header>
-  <main>
-    <section class="card">
-      <h2>1. Toy scheme based on secp256k1</h2>
-      <p>The receiver selects a private key <strong>d</strong> and computes the public key <strong>Q = dG</strong>. For each encryption, the sender selects an ephemeral key <strong>k</strong>, publishes <strong>C1 = kG</strong>, and computes the shared point <strong>S = kQ</strong>. A SHA-256 counter-mode keystream derived from S is XORed with the UTF-8 message. The receiver computes the same point as <strong>dC1</strong> and reverses the XOR.</p>
-      <p><strong>Important:</strong> this is an educational hybrid construction, not a production cryptosystem. It intentionally uses a small private-key range and does not authenticate the ciphertext.</p>
-      <div class="controls">
-        <label>Private key d <input id="eccPrivate" type="number" min="1" max="100000" value="137"></label>
-        <label>Ephemeral key k <input id="eccEphemeral" type="number" min="1" max="100000" value="71"></label>
-        <label>Message <input id="eccMessage" type="text" value="STATISTICS AND CRYPTOGRAPHY"></label>
-        <button id="eccGenerate" type="button">Generate public key</button>
-        <button id="eccEncrypt" type="button">Encrypt</button>
-        <button id="eccDecrypt" type="button">Decrypt</button>
-      </div>
-      <div id="eccOutput" class="resultBox">Generate the public key, then encrypt the message.</div>
-    </section>
 
-    <section class="card">
-      <h2>2. Caesar cipher</h2>
-      <p>Each letter is shifted by a fixed key in the alphabet. Decryption applies the opposite shift. Non-letter characters are preserved.</p>
-      <div class="controls">
-        <label>Shift key <input id="caesarKey" type="number" min="0" max="25" value="3"></label>
-        <label>Message <input id="caesarMessage" type="text" value="STATISTICS AND CRYPTOGRAPHY"></label>
-        <button id="caesarEncrypt" type="button">Encrypt</button>
-        <button id="caesarDecrypt" type="button">Decrypt result</button>
-      </div>
-      <div id="caesarOutput" class="resultBox">Choose a key and encrypt the message.</div>
-    </section>
+    <h1>Statistics Course Project</h1>
 
-    <section class="card">
-      <h2>3. Statistical cryptanalysis of Caesar</h2>
-      <p>The attack tries all 26 shifts and scores each candidate with a chi-squared comparison against expected English letter frequencies. Lower scores indicate a closer statistical match.</p>
-      <div class="controls">
-        <label>Ciphertext <textarea id="attackCipher" rows="5">WKLV LV D ORQJHU HQJOLVK WHAW XVHG WR GHPRQVWUDWH IUHTXHQFB DQDOBVLV. ZKHQ WKH VDPSOH LV ODUJHU, WKH GLVWULEXWLRQ RI OHWWHUV EHFROHV PRUH VWDEOH DQG WKH FRUUHFW VKLIW LV XVXDOOB HDVLHU WR LGHQWLIB.</textarea></label>
-        <button id="frequencyAttack" type="button">Recover Caesar key</button>
-        <button id="lengthTest" type="button">Test different lengths</button>
-      </div>
-      <div id="attackOutput" class="resultBox">Run the attack to rank the candidate keys.</div>
-      <div id="lengthOutput"></div>
-    </section>
+    <div class="navigation">
+        <a href="index.html">Home</a>
+        <a href="homework1.html">Homework 1</a>
+    </div>
 
-    <section class="card">
-      <h2>4. Attack on the restricted ECC private-key space</h2>
-      <p>The attack enumerates candidate private keys and compares each candidate public point <strong>dG</strong> with the known public key Q. Once d is recovered, it computes <strong>dC1</strong> and decrypts the ciphertext. This is feasible only because the experiment deliberately restricts d.</p>
-      <div class="controls">
-        <label>Maximum candidate key <input id="attackMax" type="number" min="1" max="100000" value="1000"></label>
-        <button id="eccAttack" type="button">Brute-force private key</button>
-      </div>
-      <div id="eccAttackOutput" class="resultBox">First encrypt a message in the ECC section.</div>
-    </section>
+    <p class="subtitle">
+        Comparison between a toy ECC cryptosystem and the Caesar Cipher
+    </p>
 
-    <section class="card">
-      <h2>5. Comparison and discussion</h2>
-      <div id="discussionBox">
-        <h3>Encryption and decryption</h3>
-        <p>Caesar substitutes every letter using one repeated shift, and decryption subtracts that shift. The toy ECC scheme uses a key pair and a fresh ephemeral scalar: both parties derive the same elliptic-curve shared point, then use it to mask the message.</p>
-        <h3>Key spaces</h3>
-        <p>Caesar has only 26 possible shifts, so exhaustive search is immediate. In this experiment the ECC private key is also deliberately small, making exhaustive search possible. Proper secp256k1 private keys range over approximately 2<sup>256</sup> possibilities, so the same enumeration method is not practical.</p>
-        <h3>Statistical properties</h3>
-        <p>Caesar preserves letter frequencies exactly, merely relabelling letters; this enables language-frequency attacks. The ECC-based hybrid scheme masks encoded bytes with a hash-derived keystream, so the original single-letter distribution is not directly preserved. Its ciphertext also changes when k changes.</p>
-        <h3>Different weaknesses</h3>
-        <p>The Caesar attack exploits language redundancy and the cipher's fixed substitution structure. The ECC attack implemented here does not exploit letter statistics; it exploits the artificially restricted private-key space. Separately, the toy construction lacks authentication, so it should not be treated as a replacement for a standard authenticated encryption scheme.</p>
-        <h3>Limitations of frequency analysis</h3>
-        <p>Short texts fluctuate strongly from normal language frequencies. Names, technical vocabulary, unusual genres, spelling variation, and a corpus in the wrong language can all rank an incorrect key first. Exhaustive search always lists all 26 Caesar candidates, while chi-squared or n-gram scoring helps automate which candidate looks most plausible.</p>
-      </div>
-    </section>
-  </main>
+    <!-- ================================================= -->
+    <!-- ECC TOY ENCRYPTION                               -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Toy ECC Encryption and Decryption</h2>
+
+        <p>
+            Curve:
+            <strong>y² = x³ + 7 (mod 17)</strong><br>
+            Base Point:
+            <strong>G = (1,5)</strong>
+        </p>
+
+        <div class="controls">
+
+            <label>
+                Private Key (k):
+                <input type="number" id="eccKey" value="6" min="1">
+            </label>
+
+            <label>
+                Message:
+                <input type="text"
+                       id="eccMessage"
+                       value="Hello World">
+            </label>
+
+            <button id="eccEncryptBtn">
+                Encrypt
+            </button>
+
+            <button id="eccDecryptBtn">
+                Decrypt
+            </button>
+
+        </div>
+
+        <div id="eccOutput" class="resultBox"></div>
+
+        <div id="eccExplanation"></div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- CAESAR CIPHER                                     -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Caesar Cipher</h2>
+
+        <div class="controls">
+
+            <label>
+                Shift:
+                <input type="number"
+                       id="caesarShift"
+                       value="3">
+            </label>
+
+            <label>
+                Message:
+                <input type="text"
+                       id="caesarMessage"
+                       value="Hello World">
+            </label>
+
+            <button id="caesarEncryptBtn">
+                Encrypt
+            </button>
+
+            <button id="caesarDecryptBtn">
+                Decrypt
+            </button>
+
+        </div>
+
+        <div id="caesarOutput" class="resultBox"></div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- LETTER DISTRIBUTION                               -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Letter Frequency Analysis</h2>
+
+        <p>
+            Insert a corpus of text. The distribution extracted from this
+            corpus will be used to attack the Caesar cipher.
+        </p>
+
+        <textarea
+            id="corpusText"
+            rows="10"
+            style="width:100%;"
+        >
+This is a simple english corpus. The larger the corpus becomes,
+the more accurately the frequency distribution approximates the
+expected distribution of letters within the language.
+        </textarea>
+
+        <br><br>
+
+        <button id="analyzeCorpusBtn">
+            Analyze Corpus
+        </button>
+
+        <canvas id="frequencyChart"></canvas>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- CAESAR ATTACK                                     -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Statistical Attack Against Caesar Cipher</h2>
+
+        <div class="controls">
+
+            <label>
+                Ciphertext:
+                <input type="text"
+                       id="attackCiphertext">
+            </label>
+
+            <button id="attackBtn">
+                Recover Key
+            </button>
+
+        </div>
+
+        <div id="attackOutput" class="resultBox"></div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- ECC BRUTE FORCE                                   -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Brute Force Attack Against Toy ECC</h2>
+
+        <p>
+            Since the private key space is intentionally tiny,
+            an attacker can enumerate all possible values.
+        </p>
+
+        <div class="controls">
+
+            <label>
+                Public Key:
+                <input type="text"
+                       id="publicKeyInput"
+                       placeholder="e.g. (1,5)">
+            </label>
+
+            <button id="bruteforceBtn">
+                Recover Private Key
+            </button>
+
+        </div>
+
+        <div id="bruteforceOutput" class="resultBox"></div>
+
+    </div>
+
 </div>
+
 <script src="homework3.js"></script>
+
 </body>
 </html>
