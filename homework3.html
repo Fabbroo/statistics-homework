@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Homework 3 - Cryptography and Statistics</title>
-
     <link rel="stylesheet" href="style.css">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
 <div class="container">
@@ -22,37 +19,55 @@
     </div>
 
     <div class="card">
-        <h2>How the Toy ECC Scheme Works</h2>
+        <h2>Toy ECC Encryption Scheme</h2>
 
         <p>
-            This toy cryptographic scheme uses the elliptic curve
-            <strong>y² = x³ + 7 (mod 17)</strong> and the generator
-            <strong>G = (1,5)</strong>.
+            This toy scheme imitates the idea behind ECIES.
         </p>
 
+        <h3>Encryption</h3>
+
         <ol>
-            <li>The receiver chooses a private key k.</li>
-            <li>The public key is computed as Q = kG.</li>
-            <li>The x-coordinate of Q is used as a secret value.</li>
-            <li>Each plaintext character is XORed with the secret value.</li>
-            <li>XORing again with the same secret recovers the original text.</li>
+            <li>The receiver chooses a private key d.</li>
+            <li>The public key is Q = dG.</li>
+            <li>The sender generates a random ephemeral key r.</li>
+            <li>The sender computes R = rG.</li>
+            <li>The shared secret is S = rQ.</li>
+            <li>The x-coordinate of S is used as a symmetric key.</li>
+            <li>The message is encrypted using XOR.</li>
         </ol>
 
+        <h3>Decryption</h3>
+
+        <ol>
+            <li>The receiver receives R and the ciphertext.</li>
+            <li>The receiver computes S = dR.</li>
+            <li>The same shared secret is obtained because dR = rQ.</li>
+            <li>XORing again with the secret recovers the message.</li>
+        </ol>
+
+        <h3>Attack</h3>
+
         <p>
-            This construction is intentionally simplified for educational
-            purposes and must not be considered secure.
+            In a real ECC system, recovering d from Q=dG is infeasible.
+            In this toy implementation the private key is limited to a
+            very small range. An attacker can therefore try every
+            possible value of d until the correct public key is found.
+            This attack is possible only because the key space is tiny.
         </p>
     </div>
 
     <div class="card">
-
         <h2>Toy ECC Encryption / Decryption</h2>
 
         <label>Private Key</label>
-        <input type="number" id="eccKey" value="6" min="1">
+        <input type="number" id="eccKey" value="6" min="1" max="30">
 
         <label>Message</label>
-        <textarea id="eccMessage" rows="6" style="width:100%;">Hello World</textarea>
+
+        <textarea id="eccMessage"
+                  rows="6"
+                  style="width:100%;">Hello World</textarea>
 
         <br><br>
 
@@ -60,18 +75,19 @@
         <button id="eccDecryptBtn">Decrypt</button>
 
         <div id="eccOutput" class="resultBox"></div>
-
     </div>
 
     <div class="card">
-
         <h2>Caesar Cipher</h2>
 
         <label>Shift</label>
         <input type="number" id="caesarShift" value="3">
 
         <label>Message</label>
-        <textarea id="caesarMessage" rows="6" style="width:100%;">Hello World</textarea>
+
+        <textarea id="caesarMessage"
+                  rows="6"
+                  style="width:100%;">Hello World</textarea>
 
         <br><br>
 
@@ -79,20 +95,21 @@
         <button id="caesarDecryptBtn">Decrypt</button>
 
         <div id="caesarOutput" class="resultBox"></div>
-
     </div>
 
     <div class="card">
-
         <h2>Letter Frequency Distribution</h2>
 
         <p>
-            Insert a text corpus. The resulting distribution is used in
-            the statistical attack against the Caesar Cipher.
+            A corpus is analyzed to estimate the distribution
+            of letters in English text.
         </p>
 
-        <textarea id="corpusText" rows="10" style="width:100%;">
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. This text can be replaced by a larger English corpus for more accurate frequency estimation.
+        <textarea id="corpusText"
+                  rows="10"
+                  style="width:100%;">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+This text can be replaced by a larger corpus.
         </textarea>
 
         <br><br>
@@ -102,15 +119,19 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. This text can be replac
         </button>
 
         <canvas id="frequencyChart"></canvas>
-
     </div>
 
     <div class="card">
-
         <h2>Statistical Cryptanalysis of Caesar Cipher</h2>
 
-        <label>Ciphertext</label>
-        <textarea id="attackCiphertext" rows="4" style="width:100%;"></textarea>
+        <p>
+            Every possible shift is tested and scored according
+            to the language statistics measured from the corpus.
+        </p>
+
+        <textarea id="attackCiphertext"
+                  rows="4"
+                  style="width:100%;"></textarea>
 
         <br><br>
 
@@ -119,17 +140,15 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. This text can be replac
         </button>
 
         <div id="attackOutput" class="resultBox"></div>
-
     </div>
 
     <div class="card">
-
         <h2>Brute Force Attack Against Toy ECC</h2>
 
         <p>
-            The attack uses the public key generated in the encryption
-            section and searches every possible private key until it
-            finds one producing the same public key.
+            The attacker only knows the public key and ciphertext.
+            Because the private key is restricted to a small range,
+            all possible keys can be tested.
         </p>
 
         <button id="bruteforceBtn">
@@ -137,12 +156,10 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. This text can be replac
         </button>
 
         <div id="bruteforceOutput" class="resultBox"></div>
-
     </div>
 
 </div>
 
 <script src="homework3.js"></script>
-
 </body>
 </html>
