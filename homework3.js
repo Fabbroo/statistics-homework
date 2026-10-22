@@ -276,18 +276,17 @@ function analyzeCorpus() {
 
     if (freqChart)
         freqChart.destroy();
-
-    freqChart =
-        new Chart({
-            type: "bar",
-            data: {
-                labels,
-                datasets: [{
-                    label: "Frequency",
-                    data: values
-                }]
-            }
-        }, ctx);
+    
+    freqChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                label: "Frequency",
+                data: values
+            }]
+        }
+    });
 }
 
 function scoreText(text) {
