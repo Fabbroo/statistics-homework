@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 3 - Law of Large Numbers</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="navigation">
+                <a href="index.html">Back to Home</a>
+            </div>
+
+            <h1>Homework 3</h1>
+            <p class="subtitle">
+                An interactive simulation of the Law of Large Numbers
+            </p>
+        </header>
+
+        <main>
+            <section class="card">
+                <h2>Experiment</h2>
+                <p>
+                    A Bernoulli trial has two possible outcomes: success (1)
+                    and failure (0). The probability of success is
+                    <strong>p</strong>. As the number of trials increases, the
+                    cumulative sample proportion should tend to become closer
+                    to the theoretical probability.
+                </p>
+
+                <div class="controls">
+                    <label for="probability">
+                        Probability of success p:
+                        <input
+                            id="probability"
+                            type="number"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value="0.50"
+                        >
+                    </label>
+
+                    <label for="trials">
+                        Number of trials:
+                        <input
+                            id="trials"
+                            type="number"
+                            min="10"
+                            max="10000"
+                            step="10"
+                            value="500"
+                        >
+                    </label>
+
+                    <label for="speed">
+                        Animation speed:
+                        <select id="speed">
+                            <option value="100">Slow</option>
+                            <option value="30" selected>Medium</option>
+                            <option value="5">Fast</option>
+                            <option value="0">Immediate</option>
+                        </select>
+                    </label>
+
+                    <button id="startBtn" type="button">Run Simulation</button>
+                    <button id="resetBtn" type="button">Reset</button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>Cumulative Sample Proportion</h2>
+                <p>
+                    The blue line is the observed cumulative proportion of
+                    successes. The red line is the theoretical probability p.
+                </p>
+                <div class="chart-container">
+                    <canvas id="convergenceChart"></canvas>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>Results</h2>
+                <div id="finalResult" class="resultBox">
+                    Run the simulation to see the results.
+                </div>
+
+                <div id="statisticsBox">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Measure</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Trials completed</td>
+                                <td id="completedValue">0</td>
+                            </tr>
+                            <tr>
+                                <td>Successes</td>
+                                <td id="successValue">0</td>
+                            </tr>
+                            <tr>
+                                <td>Failures</td>
+                                <td id="failureValue">0</td>
+                            </tr>
+                            <tr>
+                                <td>Observed proportion</td>
+                                <td id="observedValue">0.0000</td>
+                            </tr>
+                            <tr>
+                                <td>Theoretical probability</td>
+                                <td id="theoreticalValue">0.5000</td>
+                            </tr>
+                            <tr>
+                                <td>Absolute error</td>
+                                <td id="errorValue">0.5000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>Discussion</h2>
+                <div id="discussionBox">
+                    <p>
+                        For a Bernoulli random variable, the expected value is
+                        E[X] = p. The sample mean is the same as the proportion
+                        of successes because each observation is either 0 or 1.
+                    </p>
+                    <p>
+                        The Law of Large Numbers states that the sample mean
+                        converges to the expected value as the number of
+                        independent trials increases. The convergence is not
+                        necessarily monotonic: the observed proportion can move
+                        both towards and away from p during a finite simulation.
+                    </p>
+                    <p>
+                        Repeating the simulation can produce different paths,
+                        but longer runs generally show a smaller and more stable
+                        difference between the observed proportion and p.
+                    </p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="homework3.js"></script>
+</body>
+</html>
