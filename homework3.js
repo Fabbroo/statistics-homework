@@ -8,11 +8,19 @@ const G = {
 let freqChart = null;
 let languageFreq = {};
 
-function mod(n, p) {
-    return ((n % p) + p) % p;
+let eccCiphertext = [];
+let eccPublicKey = null;
+
+/* ======================================
+   ECC OPERATIONS
+====================================== */
+
+function mod(a, p) {
+    return ((a % p) + p) % p;
 }
 
 function modInverse(a, p) {
+
     a = mod(a, p);
 
     for (let x = 1; x < p; x++) {
@@ -38,49 +46,32 @@ function pointAdd(P, Q) {
 
     let m;
 
-    if (
-        P.x === Q.x &&
-        P.y === Q.y
-    ) {
+    if (P.x === Q.x && P.y === Q.y) {
 
-        const inv =
-            modInverse(
-                2 * P.y,
-                p
-            );
-
-        m =
-            mod(
-                3 * P.x * P.x * inv,
-                p
-            );
+        m = mod(
+            (3 * P.x * P.x) *
+            modInverse(2 * P.y, p),
+            p
+        );
 
     } else {
 
-        const inv =
-            modInverse(
-                Q.x - P.x,
-                p
-            );
-
-        m =
-            mod(
-                (Q.y - P.y) * inv,
-                p
-            );
+        m = mod(
+            (Q.y - P.y) *
+            modInverse(Q.x - P.x, p),
+            p
+        );
     }
 
-    const x3 =
-        mod(
-            m * m - P.x - Q.x,
-            p
-        );
+    const x3 = mod(
+        m * m - P.x - Q.x,
+        p
+    );
 
-    const y3 =
-        mod(
-            m * (P.x - x3) - P.y,
-            p
-        );
+    const y3 = mod(
+        m * (P.x - x3) - P.y,
+        p
+    );
 
     return {
         x: x3,
@@ -88,31 +79,26 @@ function pointAdd(P, Q) {
     };
 }
 
-function scalarMultiply(k, G) {
+function scalarMultiply(k, point) {
 
-    let current = {
+    let result = {
         infinity: true
     };
 
     for (let i = 0; i < k; i++) {
-        current = pointAdd(
-            current,
-            G
-        );
+        result = pointAdd(result, point);
     }
 
-    return current;
+    return result;
 }
 
-/* =====================================================
+/* ======================================
    ECC TOY ENCRYPTION
-===================================================== */
-
-let currentCipher = [];
+====================================== */
 
 function eccEncrypt() {
 
-    const k =
+    const key =
         parseInt(
             document.getElementById("eccKey").value
         );
@@ -120,82 +106,89 @@ function eccEncrypt() {
     const message =
         document.getElementById("eccMessage").value;
 
-    const publicKey =
-        scalarMultiply(k, G);
+    eccPublicKey =
+        scalarMultiply(key, G);
 
     const secret =
-        publicKey.infinity
-            ? 0
-            : publicKey.x;
+        eccPublicKey.infinity
+        ? 0
+        : eccPublicKey.x;
 
-    currentCipher =
+    eccCiphertext =
         [...message].map(
             ch => ch.charCodeAt(0) ^ secret
         );
 
     document.getElementById("eccOutput").innerHTML =
-        `
-        Cipher:
-        ${currentCipher.join(", ")}
-        `;
+    `
+    <strong>Public key:</strong>
+    (${eccPublicKey.x}, ${eccPublicKey.y})
 
-    document.getElementById("eccExplanation").innerHTML =
-        `
-        <p><strong>Public Key:</strong>
-        (${publicKey.x}, ${publicKey.y})</p>
+    <br><br>
 
-        <p><strong>Shared Secret:</strong>
-        x = ${secret}</p>
-        `;
+    <strong>Secret:</strong>
+    ${secret}
+
+    <br><br>
+
+    <strong>Ciphertext:</strong>
+    <br>
+    ${eccCiphertext.join(", ")}
+    `;
 }
 
 function eccDecrypt() {
 
-    const k =
+    const key =
         parseInt(
             document.getElementById("eccKey").value
         );
 
-    const publicKey =
-        scalarMultiply(k, G);
+    const Q =
+        scalarMultiply(key, G);
 
     const secret =
-        publicKey.infinity
-            ? 0
-            : publicKey.x;
+        Q.infinity ? 0 : Q.x;
 
     const plaintext =
-        currentCipher.map(
+        eccCiphertext
+        .map(
             v =>
-                String.fromCharCode(
-                    v ^ secret
-                )
-        ).join("");
+            String.fromCharCode(
+                v ^ secret
+            )
+        )
+        .join("");
 
     document.getElementById("eccOutput").innerHTML =
-        `
-        Plaintext:
-        ${plaintext}
-        `;
+    `
+    <strong>Plaintext:</strong>
+    <br>
+    ${plaintext}
+    `;
 }
 
-/* =====================================================
+/* ======================================
    CAESAR
-===================================================== */
+====================================== */
 
-function shiftChar(ch, shift) {
+function shiftChar(char, shift) {
 
-    if (!/[a-z]/i.test(ch))
-        return ch;
+    if (!/[a-z]/i.test(char))
+        return char;
 
     const base =
-        ch === ch.toUpperCase()
+        char === char.toUpperCase()
             ? 65
             : 97;
 
     return String.fromCharCode(
-        ((ch.charCodeAt(0) - base + shift + 26) % 26)
-        + base
+        (
+            char.charCodeAt(0)
+            - base
+            + shift
+            + 26
+        ) % 26 + base
     );
 }
 
@@ -206,18 +199,20 @@ function caesarEncrypt() {
             document.getElementById("caesarShift").value
         );
 
-    const message =
+    const text =
         document.getElementById("caesarMessage").value;
 
     const cipher =
-        [...message]
-        .map(ch => shiftChar(ch, shift))
+        [...text]
+        .map(
+            c => shiftChar(c, shift)
+        )
         .join("");
 
-    document.getElementById("attackCiphertext").value =
+    document.getElementById("caesarOutput").innerHTML =
         cipher;
 
-    document.getElementById("caesarOutput").innerHTML =
+    document.getElementById("attackCiphertext").value =
         cipher;
 }
 
@@ -228,21 +223,23 @@ function caesarDecrypt() {
             document.getElementById("caesarShift").value
         );
 
-    const message =
+    const text =
         document.getElementById("caesarMessage").value;
 
     const plain =
-        [...message]
-        .map(ch => shiftChar(ch, -shift))
+        [...text]
+        .map(
+            c => shiftChar(c, -shift)
+        )
         .join("");
 
     document.getElementById("caesarOutput").innerHTML =
         plain;
 }
 
-/* =====================================================
-   CORPUS ANALYSIS
-===================================================== */
+/* ======================================
+   FREQUENCY ANALYSIS
+====================================== */
 
 function analyzeCorpus() {
 
@@ -281,24 +278,17 @@ function analyzeCorpus() {
         freqChart.destroy();
 
     freqChart =
-        new Chart(ctx, {
+        new Chart({
             type: "bar",
             data: {
                 labels,
                 datasets: [{
-                    label:
-                        "Letter Frequency",
-                    data: values,
-                    backgroundColor:
-                        "#1f3c88"
+                    label: "Frequency",
+                    data: values
                 }]
             }
-        });
+        }, ctx);
 }
-
-/* =====================================================
-   CAESAR ATTACK
-===================================================== */
 
 function scoreText(text) {
 
@@ -314,149 +304,141 @@ function scoreText(text) {
 function recoverCaesar() {
 
     const cipher =
-        document.getElementById(
-            "attackCiphertext"
-        ).value;
+        document.getElementById("attackCiphertext").value;
 
-    let bestShift = 0;
-    let bestScore = -Infinity;
-    let bestPlain = "";
+    let candidates = [];
 
     for (let shift = 0; shift < 26; shift++) {
 
-        const candidate =
+        const plain =
             [...cipher]
             .map(
-                ch =>
-                    shiftChar(
-                        ch,
-                        -shift
-                    )
+                c =>
+                shiftChar(
+                    c,
+                    -shift
+                )
             )
             .join("");
 
         const score =
-            scoreText(candidate);
+            scoreText(plain);
 
-        if (score > bestScore) {
+        candidates.push({
+            shift,
+            score,
+            plain
+        });
+    }
 
-            bestScore = score;
-            bestShift = shift;
-            bestPlain = candidate;
-        }
+    candidates.sort(
+        (a, b) =>
+            b.score - a.score
+    );
+
+    let html =
+        "<h3>Top 5 Candidate Keys</h3>";
+
+    for (let i = 0; i < 5; i++) {
+
+        html += `
+        <p>
+        <strong>Shift ${candidates[i].shift}</strong><br>
+        Score: ${candidates[i].score}<br>
+        ${candidates[i].plain}
+        </p>
+        <hr>
+        `;
     }
 
     document.getElementById("attackOutput").innerHTML =
-        `
-        Recovered shift:
-        ${bestShift}
-        <br><br>
-        Decrypted text:
-        ${bestPlain}
-        `;
+        html;
 }
 
-/* =====================================================
+/* ======================================
    ECC BRUTE FORCE
-===================================================== */
+====================================== */
 
 function bruteForceECC() {
 
-    const text =
-        document.getElementById(
-            "publicKeyInput"
-        ).value;
-
-    const match =
-        text.match(/\((\d+),\s*(\d+)\)/);
-
-    if (!match)
+    if (!eccPublicKey) {
         return;
-
-    const x = parseInt(match[1]);
-    const y = parseInt(match[2]);
+    }
 
     for (let k = 1; k <= 30; k++) {
 
-        const Q =
-            scalarMultiply(
-                k,
-                G
-            );
+        const candidate =
+            scalarMultiply(k, G);
 
         if (
-            !Q.infinity &&
-            Q.x === x &&
-            Q.y === y
+            !candidate.infinity &&
+            candidate.x === eccPublicKey.x &&
+            candidate.y === eccPublicKey.y
         ) {
 
-            document.getElementById(
-                "bruteforceOutput"
-            ).innerHTML =
+            const secret = candidate.x;
+
+            const plaintext =
+                eccCiphertext
+                .map(
+                    v =>
+                    String.fromCharCode(
+                        v ^ secret
+                    )
+                )
+                .join("");
+
+            document.getElementById("bruteforceOutput").innerHTML =
             `
-            Recovered private key:
+            <strong>Recovered private key:</strong>
             ${k}
+
+            <br><br>
+
+            <strong>Recovered public key:</strong>
+            (${candidate.x}, ${candidate.y})
+
+            <br><br>
+
+            <strong>Recovered secret:</strong>
+            ${secret}
+
+            <br><br>
+
+            <strong>Recovered plaintext:</strong>
+            <br>
+            ${plaintext}
             `;
 
             return;
         }
     }
 
-    document.getElementById(
-        "bruteforceOutput"
-    ).innerHTML =
-        "Key not found";
+    document.getElementById("bruteforceOutput").innerHTML =
+        "Key not found.";
 }
 
-/* =====================================================
+/* ======================================
    EVENTS
-===================================================== */
+====================================== */
 
-document
-.getElementById("eccEncryptBtn")
-.addEventListener(
-    "click",
-    eccEncrypt
-);
+document.getElementById("eccEncryptBtn")
+.addEventListener("click", eccEncrypt);
 
-document
-.getElementById("eccDecryptBtn")
-.addEventListener(
-    "click",
-    eccDecrypt
-);
+document.getElementById("eccDecryptBtn")
+.addEventListener("click", eccDecrypt);
 
-document
-.getElementById("caesarEncryptBtn")
-.addEventListener(
-    "click",
-    caesarEncrypt
-);
+document.getElementById("caesarEncryptBtn")
+.addEventListener("click", caesarEncrypt);
 
-document
-.getElementById("caesarDecryptBtn")
-.addEventListener(
-    "click",
-    caesarDecrypt
-);
+document.getElementById("caesarDecryptBtn")
+.addEventListener("click", caesarDecrypt);
 
-document
-.getElementById("analyzeCorpusBtn")
-.addEventListener(
-    "click",
-    analyzeCorpus
-);
+document.getElementById("analyzeCorpusBtn")
+.addEventListener("click", analyzeCorpus);
 
-document
-.getElementById("attackBtn")
-.addEventListener(
-    "click",
-    recoverCaesar
-);
+document.getElementById("attackBtn")
+.addEventListener("click", recoverCaesar);
 
-document
-.getElementById("bruteforceBtn")
-.addEventListener(
-    "click",
-    bruteForceECC
-);
+document.getElementById("bruteforceBtn")
+.addEventListener("click", bruteForceECC);
