@@ -49,11 +49,11 @@
         <h3>Attack</h3>
 
         <p>
-            In a real ECC system, recovering d from Q=dG is infeasible.
+            In a real ECC system, recovering d from Q=dG is infeasible, 
+            because the key space is much bigger.
             In this toy implementation the private key is limited to a
             very small range. An attacker can therefore try every
             possible value of d until the correct public key is found.
-            This attack is possible only because the key space is tiny.
         </p>
     </div>
 
@@ -161,6 +161,17 @@ This text can be replaced by a larger corpus.
         </button>
 
         <div id="bruteforceOutput" class="resultBox"></div>
+    </div>
+
+    <div class="card">
+        <h2>Effectiveness of statiscical attacks on ECC</h2>
+
+        <p>
+            Frequency analysis succeeds against Caesar because the encryption preserves the statistical distribution of letters. 
+            A shift only relocates frequencies. ECC-based encryption derives a shared secret and combines it with the message; 
+            consequently, the ciphertext does not preserve the characteristic letter distribution of the plaintext. 
+            Therefore the statistical attack used against Caesar cannot be directly applied to ECC.
+        </p>
     </div>
 
 </div>
