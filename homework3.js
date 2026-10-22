@@ -10,6 +10,7 @@ let languageFreq = {};
 
 let eccCiphertext = [];
 let eccPublicKey = null;
+let eccEphemeralPoint = null;
 
 /* ======================================
    ECC OPERATIONS
@@ -98,63 +99,74 @@ function scalarMultiply(k, point) {
 
 function eccEncrypt() {
 
-    const key =
-        parseInt(
-            document.getElementById("eccKey").value
-        );
+    const d = parseInt(
+        document.getElementById("eccKey").value
+    );
 
     const message =
         document.getElementById("eccMessage").value;
 
-    eccPublicKey =
-        scalarMultiply(key, G);
+    eccPublicKey = scalarMultiply(d, G);
+
+    const r =
+        Math.floor(Math.random() * 15) + 1;
+
+    eccEphemeralPoint =
+        scalarMultiply(r, G);
+
+    const shared =
+        scalarMultiply(r, eccPublicKey);
 
     const secret =
-        eccPublicKey.infinity
-        ? 0
-        : eccPublicKey.x;
+        shared.infinity ? 0 : shared.x;
 
     eccCiphertext =
         [...message].map(
-            ch => ch.charCodeAt(0) ^ secret
+            c => c.charCodeAt(0) ^ secret
         );
 
     document.getElementById("eccOutput").innerHTML =
     `
-    <strong>Public key:</strong>
+    <strong>Public Key Q:</strong>
     (${eccPublicKey.x}, ${eccPublicKey.y})
 
     <br><br>
 
-    <strong>Secret:</strong>
+    <strong>Ephemeral Point R:</strong>
+    (${eccEphemeralPoint.x}, ${eccEphemeralPoint.y})
+
+    <br><br>
+
+    <strong>Shared Secret x(S):</strong>
     ${secret}
 
     <br><br>
 
-    <strong>Ciphertext:</strong>
-    <br>
+    <strong>Ciphertext:</strong><br>
     ${eccCiphertext.join(", ")}
     `;
 }
 
 function eccDecrypt() {
 
-    const key =
+    const d =
         parseInt(
             document.getElementById("eccKey").value
         );
 
-    const Q =
-        scalarMultiply(key, G);
+    const shared =
+        scalarMultiply(
+            d,
+            eccEphemeralPoint
+        );
 
     const secret =
-        Q.infinity ? 0 : Q.x;
+        shared.infinity ? 0 : shared.x;
 
     const plaintext =
         eccCiphertext
         .map(
-            v =>
-            String.fromCharCode(
+            v => String.fromCharCode(
                 v ^ secret
             )
         )
@@ -162,8 +174,8 @@ function eccDecrypt() {
 
     document.getElementById("eccOutput").innerHTML =
     `
-    <strong>Plaintext:</strong>
-    <br>
+    <strong>Recovered Plaintext:</strong>
+    <br><br>
     ${plaintext}
     `;
 }
@@ -360,9 +372,7 @@ function recoverCaesar() {
 
 function bruteForceECC() {
 
-    if (!eccPublicKey) {
-        return;
-    }
+    if (!eccPublicKey) return;
 
     for (let k = 1; k <= 30; k++) {
 
@@ -375,36 +385,36 @@ function bruteForceECC() {
             candidate.y === eccPublicKey.y
         ) {
 
-            const secret = candidate.x;
+            const shared =
+                scalarMultiply(
+                    k,
+                    eccEphemeralPoint
+                );
+
+            const secret =
+                shared.infinity
+                ? 0
+                : shared.x;
 
             const plaintext =
                 eccCiphertext
                 .map(
-                    v =>
-                    String.fromCharCode(
+                    v => String.fromCharCode(
                         v ^ secret
                     )
                 )
                 .join("");
 
-            document.getElementById("bruteforceOutput").innerHTML =
+            document.getElementById(
+                "bruteforceOutput"
+            ).innerHTML =
             `
-            <strong>Recovered private key:</strong>
+            <strong>Recovered Private Key:</strong>
             ${k}
 
             <br><br>
 
-            <strong>Recovered public key:</strong>
-            (${candidate.x}, ${candidate.y})
-
-            <br><br>
-
-            <strong>Recovered secret:</strong>
-            ${secret}
-
-            <br><br>
-
-            <strong>Recovered plaintext:</strong>
+            <strong>Recovered Plaintext:</strong>
             <br>
             ${plaintext}
             `;
@@ -412,9 +422,6 @@ function bruteForceECC() {
             return;
         }
     }
-
-    document.getElementById("bruteforceOutput").innerHTML =
-        "Key not found.";
 }
 
 /* ======================================
