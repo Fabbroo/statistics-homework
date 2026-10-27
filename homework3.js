@@ -15,8 +15,11 @@ function variance(arr) {
     ) / arr.length;
 }
 
-function increment(model, p) {
+function gaussian(x) {
+    return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+}
 
+function increment(model, p) {
     if (model === "bernoulli") {
         return Math.random() < p ? 1 : 0;
     }
@@ -29,19 +32,18 @@ function simulateForN(n, m, model, p) {
     const totals = [];
     const averages = [];
     const normalized = [];
-
     const trajectories = [];
 
     for (let attacker = 0; attacker < m; attacker++) {
 
         let score = 0;
-        const path = [];
+        const trajectory = [];
 
         for (let step = 0; step < n; step++) {
 
             score += increment(model, p);
 
-            path.push(score);
+            trajectory.push(score);
         }
 
         totals.push(score);
@@ -49,7 +51,7 @@ function simulateForN(n, m, model, p) {
         normalized.push(score / Math.sqrt(n));
 
         if (attacker < 10) {
-            trajectories.push(path);
+            trajectories.push(trajectory);
         }
     }
 
@@ -61,269 +63,298 @@ function simulateForN(n, m, model, p) {
     };
 }
 
-function buildHistogram(data, bins = 25) {
+function buildDensityHistogram(
+    data,
+    bins,
+    globalMin,
+    globalMax
+) {
 
-    const min = Math.min(...data);
-    const max = Math.max(...data);
+    const width =
+        (globalMax - globalMin) / bins;
 
-    const width = (max - min) / bins || 1;
+    const counts =
+        Array(bins).fill(0);
 
-    const counts = Array(bins).fill(0);
+    data.forEach(value => {
+
+        let idx = Math.floor(
+            (value - globalMin) / width
+        );
+
+        if (idx < 0) {
+            idx = 0;
+        }
+
+        if (idx >= bins) {
+            idx = bins - 1;
+        }
+
+        counts[idx]++;
+    });
+
+    const density =
+        counts.map(
+            c => c / (data.length * width)
+        );
+
     const labels = [];
 
     for (let i = 0; i < bins; i++) {
 
         labels.push(
-            (min + i * width).toFixed(2)
+            (
+                globalMin +
+                (i + 0.5) * width
+            ).toFixed(2)
         );
     }
-
-    data.forEach(value => {
-
-        let index = Math.floor(
-            (value - min) / width
-        );
-
-        if (index >= bins) {
-            index = bins - 1;
-        }
-
-        counts[index]++;
-    });
 
     return {
         labels,
-        counts
+        density
     };
 }
 
-function drawHistogram(canvasId, values, color) {
+function destroyChart(canvasId) {
 
-    const canvas =
-        document.getElementById(canvasId);
+    const existing =
+        Chart.getChart(canvasId);
 
-    const oldChart =
-        Chart.getChart(canvas);
+    if (existing) {
+        existing.destroy();
+    }
+}
 
-    if (oldChart) {
-        oldChart.destroy();
+function drawHistogram(
+    canvasId,
+    values,
+    globalMin,
+    globalMax,
+    color,
+    normalOverlay = false
+) {
+
+    destroyChart(canvasId);
+
+    const bins = 30;
+
+    const hist =
+        buildDensityHistogram(
+            values,
+            bins,
+            globalMin,
+            globalMax
+        );
+
+    const datasets = [
+
+        {
+            type: "bar",
+            label: "Empirical Density",
+            data: hist.density,
+            backgroundColor: color
+        }
+    ];
+
+    if (normalOverlay) {
+
+        const width =
+            (globalMax - globalMin) / bins;
+
+        const gaussianPoints =
+            hist.labels.map(center => {
+
+                return gaussian(
+                    parseFloat(center)
+                );
+            });
+
+        datasets.push({
+            type: "line",
+            label: "N(0,1)",
+            data: gaussianPoints,
+            borderColor: "#d62728",
+            borderWidth: 2,
+            fill: false,
+            pointRadius: 0
+        });
     }
 
-    const histogram =
-        buildHistogram(values);
-
-    new Chart(canvas, {
-
-        type: "bar",
-
-        data: {
-
-            labels: histogram.labels,
-
-            datasets: [{
-                data: histogram.counts,
-                backgroundColor: color
-            }]
-        },
-
-        options: {
-
-            responsive: true,
-
-            plugins: {
-                legend: {
-                    display: false
-                }
+    new Chart(
+        document.getElementById(canvasId),
+        {
+            data: {
+                labels: hist.labels,
+                datasets
             },
+            options: {
+                responsive: true,
 
-            scales: {
-                x: {
-                    ticks: {
-                        maxTicksLimit: 8
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Density"
+                        }
                     }
                 }
             }
         }
-    });
+    );
 }
 
 function drawTrajectories(paths) {
-
-    const canvas =
-        document.getElementById(
-            "trajectoryChart"
-        );
 
     if (trajectoryChart) {
         trajectoryChart.destroy();
     }
 
     trajectoryChart =
-        new Chart(canvas, {
+        new Chart(
+            document.getElementById(
+                "trajectoryChart"
+            ),
+            {
+                type: "line",
 
-            type: "line",
+                data: {
 
-            data: {
-
-                labels:
+                    labels:
                     Array.from(
                         {
                             length:
-                                paths[0].length
+                            paths[0].length
                         },
                         (_, i) => i + 1
                     ),
 
-                datasets:
+                    datasets:
                     paths.map(
-                        (path, index) => ({
+                        (path, idx) => ({
                             label:
-                                `Attacker ${index + 1}`,
+                            `Attacker ${idx + 1}`,
                             data: path,
                             pointRadius: 0,
                             borderWidth: 1
                         })
                     )
-            },
-
-            options: {
-                responsive: true
+                }
             }
-        });
+        );
+}
+
+function globalRange(results, key) {
+
+    const data =
+        results.flatMap(
+            r => r[key]
+        );
+
+    return {
+        min: Math.min(...data),
+        max: Math.max(...data)
+    };
 }
 
 function updateStatistics(results) {
 
-    let html = `
-        <h2>Empirical Statistics</h2>
-    `;
+    let html =
+        "<h2>Empirical Statistics</h2>";
 
     results.forEach(r => {
 
         html += `
+        <h3>n = ${r.n}</h3>
 
-            <h3>n = ${r.n}</h3>
+        <p><b>Mean(Sₙ)</b>:
+        ${mean(r.totals).toFixed(4)}</p>
 
-            <p>
-                <strong>Mean(Sₙ)</strong>:
-                ${mean(r.totals).toFixed(4)}
-            </p>
+        <p><b>Var(Sₙ)</b>:
+        ${variance(r.totals).toFixed(4)}</p>
 
-            <p>
-                <strong>Var(Sₙ)</strong>:
-                ${variance(r.totals).toFixed(4)}
-            </p>
+        <p><b>Mean(Sₙ/n)</b>:
+        ${mean(r.averages).toFixed(4)}</p>
 
-            <p>
-                <strong>Mean(Sₙ/n)</strong>:
-                ${mean(r.averages).toFixed(4)}
-            </p>
+        <p><b>Var(Sₙ/n)</b>:
+        ${variance(r.averages).toFixed(6)}</p>
 
-            <p>
-                <strong>Var(Sₙ/n)</strong>:
-                ${variance(r.averages).toFixed(6)}
-            </p>
+        <p><b>Mean(Sₙ/√n)</b>:
+        ${mean(r.normalized).toFixed(4)}</p>
 
-            <p>
-                <strong>Mean(Sₙ/√n)</strong>:
-                ${mean(r.normalized).toFixed(4)}
-            </p>
+        <p><b>Var(Sₙ/√n)</b>:
+        ${variance(r.normalized).toFixed(4)}</p>
 
-            <p>
-                <strong>Var(Sₙ/√n)</strong>:
-                ${variance(r.normalized).toFixed(4)}
-            </p>
-
-            <hr>
+        <hr>
         `;
     });
 
-    document.getElementById(
-        "statsBox"
-    ).innerHTML = html;
+    document
+        .getElementById("statsBox")
+        .innerHTML = html;
 }
 
-function updateDiscussion(model, p) {
+function updateDiscussion(model) {
 
-    let discussion = `
-
+    let text = `
     <h2>Discussion</h2>
 
-    <h3>Total Score Sₙ</h3>
-
     <p>
-    As n increases, the spread of the distribution
-    of Sₙ increases. This is expected because
-    Var(Sₙ)=nVar(X), so the variance grows linearly
-    with the number of systems considered.
-    Larger infrastructures therefore exhibit larger
-    aggregate penetration score fluctuations.
+    For Sₙ, the distributions become increasingly
+    spread out as n grows because the variance grows
+    proportionally to n.
     </p>
 
-    <h3>Average Score Sₙ/n</h3>
-
     <p>
-    The empirical distributions become progressively
-    concentrated around their theoretical mean.
-    This behavior illustrates the Law of Large Numbers.
-    Random fluctuations become less important when
-    many systems are observed.
+    For Sₙ/n, the distributions become narrower
+    around the theoretical mean, illustrating the
+    Law of Large Numbers.
     </p>
 
-    <h3>Normalized Score Sₙ/√n</h3>
-
     <p>
-    The normalization by √n keeps the variance
-    approximately constant as n grows. This allows
-    meaningful comparisons across different system sizes.
+    For Sₙ/√n, the variance remains approximately
+    constant, making it possible to compare
+    different values of n on the same scale.
     </p>
     `;
 
-    if (model === "bernoulli") {
-
-        discussion += `
-
-        <p>
-        For the Bernoulli model the theoretical mean
-        is p = ${p}. As n increases, the average score
-        clearly approaches this value, confirming the
-        Law of Large Numbers.
-        </p>
-        `;
-    }
-
     if (model === "rademacher") {
 
-        discussion += `
-
+        text += `
         <p>
-        The Rademacher model has mean 0 and variance 1.
-        As n increases, the histogram of Sₙ/√n becomes
-        increasingly bell-shaped and approaches a standard
-        normal distribution, providing empirical evidence
-        of the Central Limit Theorem.
+        The red curve corresponds to the theoretical
+        standard normal density N(0,1). As n grows,
+        the empirical distribution of Sₙ/√n approaches
+        this curve, providing visual evidence of the
+        Central Limit Theorem.
         </p>
         `;
     }
 
-    document.getElementById(
-        "discussionBox"
-    ).innerHTML = discussion;
+    document
+        .getElementById("discussionBox")
+        .innerHTML = text;
 }
 
 function simulate() {
 
     const model =
-        document.getElementById("model").value;
+        document
+        .getElementById("model")
+        .value;
 
     const m =
         parseInt(
-            document.getElementById("m").value
+            document
+            .getElementById("m")
+            .value
         );
 
     const p =
         parseFloat(
-            document.getElementById("p").value
+            document
+            .getElementById("p")
+            .value
         );
 
     const results = [];
@@ -345,69 +376,111 @@ function simulate() {
         results[2].trajectories
     );
 
+    const totalRange =
+        globalRange(
+            results,
+            "totals"
+        );
+
+    const avgRange =
+        globalRange(
+            results,
+            "averages"
+        );
+
+    const normRange =
+        globalRange(
+            results,
+            "normalized"
+        );
+
     drawHistogram(
-        "snChart50",
+        "sn50",
         results[0].totals,
+        totalRange.min,
+        totalRange.max,
         "#4e79a7"
     );
 
     drawHistogram(
-        "snChart500",
+        "sn500",
         results[1].totals,
+        totalRange.min,
+        totalRange.max,
         "#f28e2b"
     );
 
     drawHistogram(
-        "snChart5000",
+        "sn5000",
         results[2].totals,
+        totalRange.min,
+        totalRange.max,
         "#59a14f"
     );
 
     drawHistogram(
-        "avgChart50",
+        "avg50",
         results[0].averages,
+        avgRange.min,
+        avgRange.max,
         "#4e79a7"
     );
 
     drawHistogram(
-        "avgChart500",
+        "avg500",
         results[1].averages,
+        avgRange.min,
+        avgRange.max,
         "#f28e2b"
     );
 
     drawHistogram(
-        "avgChart5000",
+        "avg5000",
         results[2].averages,
+        avgRange.min,
+        avgRange.max,
         "#59a14f"
     );
 
+    const showCLT =
+        model === "rademacher";
+
     drawHistogram(
-        "normChart50",
+        "norm50",
         results[0].normalized,
-        "#4e79a7"
+        normRange.min,
+        normRange.max,
+        "#4e79a7",
+        showCLT
     );
 
     drawHistogram(
-        "normChart500",
+        "norm500",
         results[1].normalized,
-        "#f28e2b"
+        normRange.min,
+        normRange.max,
+        "#f28e2b",
+        showCLT
     );
 
     drawHistogram(
-        "normChart5000",
+        "norm5000",
         results[2].normalized,
-        "#59a14f"
+        normRange.min,
+        normRange.max,
+        "#59a14f",
+        showCLT
     );
 
     updateStatistics(results);
-    updateDiscussion(model, p);
+    updateDiscussion(model);
 }
 
 document
-    .getElementById("runBtn")
-    .addEventListener(
-        "click",
-        simulate
-    );
+.getElementById("runBtn")
+.addEventListener(
+    "click",
+    simulate
+);
 
 simulate();
