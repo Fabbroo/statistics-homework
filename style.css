@@ -157,3 +157,8 @@ th {
 .navigation a:hover {
     background: #2952b8;
 }
+
+canvas{
+    width:100% !important;
+    height:450px !important;
+}
