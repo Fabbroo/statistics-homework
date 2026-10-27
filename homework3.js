@@ -1,9 +1,6 @@
 const N_VALUES = [50, 500, 5000];
 
 let trajectoryChart = null;
-let snChart = null;
-let avgChart = null;
-let normChart = null;
 
 function mean(arr) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -18,7 +15,7 @@ function variance(arr) {
     ) / arr.length;
 }
 
-function generateIncrement(model, p) {
+function increment(model, p) {
 
     if (model === "bernoulli") {
         return Math.random() < p ? 1 : 0;
@@ -42,19 +39,14 @@ function simulateForN(n, m, model, p) {
 
         for (let step = 0; step < n; step++) {
 
-            score += generateIncrement(
-                model,
-                p
-            );
+            score += increment(model, p);
 
             path.push(score);
         }
 
         totals.push(score);
         averages.push(score / n);
-        normalized.push(
-            score / Math.sqrt(n)
-        );
+        normalized.push(score / Math.sqrt(n));
 
         if (attacker < 10) {
             trajectories.push(path);
@@ -69,7 +61,7 @@ function simulateForN(n, m, model, p) {
     };
 }
 
-function histogram(data, bins = 25) {
+function buildHistogram(data, bins = 25) {
 
     const min = Math.min(...data);
     const max = Math.max(...data);
@@ -99,43 +91,56 @@ function histogram(data, bins = 25) {
         counts[index]++;
     });
 
-    return { labels, counts };
+    return {
+        labels,
+        counts
+    };
 }
 
-function createHistogramChart(
-    canvasId,
-    datasets,
-    title
-) {
+function drawHistogram(canvasId, values, color) {
 
     const canvas =
         document.getElementById(canvasId);
 
-    let previous =
+    const oldChart =
         Chart.getChart(canvas);
 
-    if (previous) {
-        previous.destroy();
+    if (oldChart) {
+        oldChart.destroy();
     }
+
+    const histogram =
+        buildHistogram(values);
 
     new Chart(canvas, {
 
         type: "bar",
 
         data: {
-            labels: datasets[0].labels,
-            datasets: datasets.map(d => ({
-                label: d.label,
-                data: d.counts
-            }))
+
+            labels: histogram.labels,
+
+            datasets: [{
+                data: histogram.counts,
+                backgroundColor: color
+            }]
         },
 
         options: {
+
             responsive: true,
+
             plugins: {
-                title: {
-                    display: true,
-                    text: title
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+                x: {
+                    ticks: {
+                        maxTicksLimit: 8
+                    }
                 }
             }
         }
@@ -175,7 +180,8 @@ function drawTrajectories(paths) {
                             label:
                                 `Attacker ${index + 1}`,
                             data: path,
-                            pointRadius: 0
+                            pointRadius: 0,
+                            borderWidth: 1
                         })
                     )
             },
@@ -186,32 +192,145 @@ function drawTrajectories(paths) {
         });
 }
 
+function updateStatistics(results) {
+
+    let html = `
+        <h2>Empirical Statistics</h2>
+    `;
+
+    results.forEach(r => {
+
+        html += `
+
+            <h3>n = ${r.n}</h3>
+
+            <p>
+                <strong>Mean(Sₙ)</strong>:
+                ${mean(r.totals).toFixed(4)}
+            </p>
+
+            <p>
+                <strong>Var(Sₙ)</strong>:
+                ${variance(r.totals).toFixed(4)}
+            </p>
+
+            <p>
+                <strong>Mean(Sₙ/n)</strong>:
+                ${mean(r.averages).toFixed(4)}
+            </p>
+
+            <p>
+                <strong>Var(Sₙ/n)</strong>:
+                ${variance(r.averages).toFixed(6)}
+            </p>
+
+            <p>
+                <strong>Mean(Sₙ/√n)</strong>:
+                ${mean(r.normalized).toFixed(4)}
+            </p>
+
+            <p>
+                <strong>Var(Sₙ/√n)</strong>:
+                ${variance(r.normalized).toFixed(4)}
+            </p>
+
+            <hr>
+        `;
+    });
+
+    document.getElementById(
+        "statsBox"
+    ).innerHTML = html;
+}
+
+function updateDiscussion(model, p) {
+
+    let discussion = `
+
+    <h2>Discussion</h2>
+
+    <h3>Total Score Sₙ</h3>
+
+    <p>
+    As n increases, the spread of the distribution
+    of Sₙ increases. This is expected because
+    Var(Sₙ)=nVar(X), so the variance grows linearly
+    with the number of systems considered.
+    Larger infrastructures therefore exhibit larger
+    aggregate penetration score fluctuations.
+    </p>
+
+    <h3>Average Score Sₙ/n</h3>
+
+    <p>
+    The empirical distributions become progressively
+    concentrated around their theoretical mean.
+    This behavior illustrates the Law of Large Numbers.
+    Random fluctuations become less important when
+    many systems are observed.
+    </p>
+
+    <h3>Normalized Score Sₙ/√n</h3>
+
+    <p>
+    The normalization by √n keeps the variance
+    approximately constant as n grows. This allows
+    meaningful comparisons across different system sizes.
+    </p>
+    `;
+
+    if (model === "bernoulli") {
+
+        discussion += `
+
+        <p>
+        For the Bernoulli model the theoretical mean
+        is p = ${p}. As n increases, the average score
+        clearly approaches this value, confirming the
+        Law of Large Numbers.
+        </p>
+        `;
+    }
+
+    if (model === "rademacher") {
+
+        discussion += `
+
+        <p>
+        The Rademacher model has mean 0 and variance 1.
+        As n increases, the histogram of Sₙ/√n becomes
+        increasingly bell-shaped and approaches a standard
+        normal distribution, providing empirical evidence
+        of the Central Limit Theorem.
+        </p>
+        `;
+    }
+
+    document.getElementById(
+        "discussionBox"
+    ).innerHTML = discussion;
+}
+
 function simulate() {
 
     const model =
-        document
-            .getElementById("model")
-            .value;
+        document.getElementById("model").value;
 
     const m =
         parseInt(
-            document
-                .getElementById("m")
-                .value
+            document.getElementById("m").value
         );
 
     const p =
         parseFloat(
-            document
-                .getElementById("p")
-                .value
+            document.getElementById("p").value
         );
 
-    const allResults = [];
+    const results = [];
 
     for (const n of N_VALUES) {
 
-        allResults.push({
+        results.push({
             n,
             ...simulateForN(
                 n,
@@ -222,161 +341,66 @@ function simulate() {
         });
     }
 
-    const largest =
-        allResults[
-            allResults.length - 1
-        ];
-
     drawTrajectories(
-        largest.trajectories
+        results[2].trajectories
     );
 
-    createHistogramChart(
-        "snChart",
-        allResults.map(r => ({
-            label: `n=${r.n}`,
-            ...histogram(r.totals)
-        })),
-        "Total Score Sₙ"
+    drawHistogram(
+        "snChart50",
+        results[0].totals,
+        "#4e79a7"
     );
 
-    createHistogramChart(
-        "avgChart",
-        allResults.map(r => ({
-            label: `n=${r.n}`,
-            ...histogram(r.averages)
-        })),
-        "Average Score Sₙ/n"
+    drawHistogram(
+        "snChart500",
+        results[1].totals,
+        "#f28e2b"
     );
 
-    createHistogramChart(
-        "normChart",
-        allResults.map(r => ({
-            label: `n=${r.n}`,
-            ...histogram(r.normalized)
-        })),
-        "Normalized Score Sₙ/√n"
+    drawHistogram(
+        "snChart5000",
+        results[2].totals,
+        "#59a14f"
     );
 
-    updateStatistics(allResults);
-    updateDiscussion(model);
-}
+    drawHistogram(
+        "avgChart50",
+        results[0].averages,
+        "#4e79a7"
+    );
 
-function updateStatistics(results) {
+    drawHistogram(
+        "avgChart500",
+        results[1].averages,
+        "#f28e2b"
+    );
 
-    let html =
-        "<h2>Statistics</h2>";
+    drawHistogram(
+        "avgChart5000",
+        results[2].averages,
+        "#59a14f"
+    );
 
-    results.forEach(r => {
+    drawHistogram(
+        "normChart50",
+        results[0].normalized,
+        "#4e79a7"
+    );
 
-        html += `
-            <h3>n = ${r.n}</h3>
+    drawHistogram(
+        "normChart500",
+        results[1].normalized,
+        "#f28e2b"
+    );
 
-            <p>
-                Mean(Sn):
-                ${mean(r.totals).toFixed(4)}
-            </p>
+    drawHistogram(
+        "normChart5000",
+        results[2].normalized,
+        "#59a14f"
+    );
 
-            <p>
-                Var(Sn):
-                ${variance(r.totals)
-                    .toFixed(4)}
-            </p>
-
-            <p>
-                Mean(Sn/n):
-                ${mean(r.averages)
-                    .toFixed(4)}
-            </p>
-
-            <p>
-                Var(Sn/n):
-                ${variance(r.averages)
-                    .toFixed(6)}
-            </p>
-
-            <p>
-                Mean(Sn/√n):
-                ${mean(r.normalized)
-                    .toFixed(4)}
-            </p>
-
-            <p>
-                Var(Sn/√n):
-                ${variance(r.normalized)
-                    .toFixed(4)}
-            </p>
-
-            <hr>
-        `;
-    });
-
-    document
-        .getElementById("statsBox")
-        .innerHTML = html;
-}
-
-function updateDiscussion(model) {
-
-    let text = `
-    <h2>Discussion</h2>
-
-    <p>
-    As n increases, the distribution
-    of Sₙ becomes wider because its
-    variance grows proportionally to n.
-    Therefore larger systems exhibit
-    larger aggregate score fluctuations.
-    </p>
-
-    <p>
-    The quantity Sₙ/n becomes
-    increasingly concentrated around
-    the theoretical expected value.
-    This behavior illustrates the
-    Law of Large Numbers.
-    </p>
-
-    <p>
-    The quantity Sₙ/√n keeps
-    approximately constant variance.
-    It is therefore the appropriate
-    normalization for studying the
-    asymptotic distribution.
-    </p>
-    `;
-
-    if (model === "rademacher") {
-
-        text += `
-        <p>
-        In the Rademacher model the
-        normalized score approaches
-        a standard normal distribution
-        as n increases. The histogram
-        becomes increasingly bell-shaped,
-        providing empirical evidence
-        of the Central Limit Theorem.
-        </p>
-        `;
-    } else {
-
-        text += `
-        <p>
-        In the Bernoulli model the
-        average score converges toward
-        p, while the normalized score
-        becomes increasingly regular
-        and approximately Gaussian.
-        </p>
-        `;
-    }
-
-    document
-        .getElementById(
-            "discussionBox"
-        )
-        .innerHTML = text;
+    updateStatistics(results);
+    updateDiscussion(model, p);
 }
 
 document
