@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homework 3 - LLN and CLT</title>
+    <title>Homework 3 - Law of Large Numbers and Central Limit Theorem</title>
 
     <link rel="stylesheet" href="style.css">
 
@@ -13,136 +13,145 @@
 
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <h1>Homework 3 - Penetration Process Simulation</h1>
+    <h1>
+        Homework 3 - Penetration Process Simulation
+    </h1>
 
-        <div class="navigation">
-            <a href="index.html">Back to Home</a>
-        </div>
-
-        <section class="card">
-
-            <h2>Simulation Parameters</h2>
-
-            <div class="controls">
-
-                <div>
-                    <label for="model">Model</label>
-                    <select id="model">
-                        <option value="bernoulli">Bernoulli</option>
-                        <option value="rademacher">Rademacher</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="m">Attackers (m)</label>
-                    <input type="number"
-                           id="m"
-                           min="10"
-                           value="1000">
-                </div>
-
-                <div>
-                    <label for="p">Bernoulli p</label>
-                    <input type="number"
-                           id="p"
-                           min="0"
-                           max="1"
-                           step="0.01"
-                           value="0.30">
-                </div>
-
-                <button id="runBtn">
-                    Run Simulation
-                </button>
-
-            </div>
-
-        </section>
-
-        <section class="card">
-            <h2>Sample Trajectories (n = 5000)</h2>
-            <canvas id="trajectoryChart"></canvas>
-        </section>
-
-        <section class="card">
-            <h2>Total Score Sₙ</h2>
-
-            <div class="chart-grid">
-                <div>
-                    <h3>n = 50</h3>
-                    <canvas id="snChart50"></canvas>
-                </div>
-
-                <div>
-                    <h3>n = 500</h3>
-                    <canvas id="snChart500"></canvas>
-                </div>
-
-                <div>
-                    <h3>n = 5000</h3>
-                    <canvas id="snChart5000"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Average Score Sₙ / n</h2>
-
-            <div class="chart-grid">
-
-                <div>
-                    <h3>n = 50</h3>
-                    <canvas id="avgChart50"></canvas>
-                </div>
-
-                <div>
-                    <h3>n = 500</h3>
-                    <canvas id="avgChart500"></canvas>
-                </div>
-
-                <div>
-                    <h3>n = 5000</h3>
-                    <canvas id="avgChart5000"></canvas>
-                </div>
-
-            </div>
-        </section>
-
-        <section class="card">
-
-            <h2>Normalized Score Sₙ / √n</h2>
-
-            <div class="chart-grid">
-
-                <div>
-                    <h3>n = 50</h3>
-                    <canvas id="normChart50"></canvas>
-                </div>
-
-                <div>
-                    <h3>n = 500</h3>
-                    <canvas id="normChart500"></canvas>
-                </div>
-
-                <div>
-                    <h3>n = 5000</h3>
-                    <canvas id="normChart5000"></canvas>
-                </div>
-
-            </div>
-
-        </section>
-
-        <section id="statsBox" class="card"></section>
-
-        <section id="discussionBox" class="card"></section>
-
+    <div class="navigation">
+        <a href="index.html">Back to Home</a>
     </div>
 
-    <script src="homework3.js"></script>
+    <section class="card">
+
+        <h2>Simulation Parameters</h2>
+
+        <div class="controls">
+
+            <div>
+                <label>Model</label>
+                <select id="model">
+                    <option value="bernoulli">Bernoulli</option>
+                    <option value="rademacher">Rademacher</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Attackers (m)</label>
+                <input
+                    id="m"
+                    type="number"
+                    value="1000"
+                    min="10">
+            </div>
+
+            <div>
+                <label>Success Probability p</label>
+                <input
+                    id="p"
+                    type="number"
+                    value="0.3"
+                    min="0"
+                    max="1"
+                    step="0.01">
+            </div>
+
+            <button id="runBtn">
+                Run Simulation
+            </button>
+
+        </div>
+
+    </section>
+
+    <section class="card">
+        <h2>Sample Trajectories (n = 5000)</h2>
+        <canvas id="trajectoryChart"></canvas>
+    </section>
+
+    <section class="card">
+
+        <h2>Total Score Sₙ</h2>
+
+        <div class="chart-grid">
+
+            <div>
+                <h3>n = 50</h3>
+                <canvas id="sn50"></canvas>
+            </div>
+
+            <div>
+                <h3>n = 500</h3>
+                <canvas id="sn500"></canvas>
+            </div>
+
+            <div>
+                <h3>n = 5000</h3>
+                <canvas id="sn5000"></canvas>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="card">
+
+        <h2>Average Score Sₙ/n</h2>
+
+        <div class="chart-grid">
+
+            <div>
+                <h3>n = 50</h3>
+                <canvas id="avg50"></canvas>
+            </div>
+
+            <div>
+                <h3>n = 500</h3>
+                <canvas id="avg500"></canvas>
+            </div>
+
+            <div>
+                <h3>n = 5000</h3>
+                <canvas id="avg5000"></canvas>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="card">
+
+        <h2>Normalized Score Sₙ/√n</h2>
+
+        <div class="chart-grid">
+
+            <div>
+                <h3>n = 50</h3>
+                <canvas id="norm50"></canvas>
+            </div>
+
+            <div>
+                <h3>n = 500</h3>
+                <canvas id="norm500"></canvas>
+            </div>
+
+            <div>
+                <h3>n = 5000</h3>
+                <canvas id="norm5000"></canvas>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section id="statsBox" class="card"></section>
+
+    <section id="discussionBox" class="card"></section>
+
+</div>
+
+<script src="homework3.js"></script>
 
 </body>
-
 </html>
