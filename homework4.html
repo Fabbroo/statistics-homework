@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Homework 4 - Welford Statistics</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Homework 4 - Welford's Recurrence Formulas</h1>
+
+<div class="navigation">
+    <a href="index.html">Back to Home</a>
+</div>
+
+<section class="card">
+
+    <h2>Simulation Parameters</h2>
+
+    <div class="controls">
+
+        <label>
+            Hackers (m)
+            <input
+                id="hackers"
+                type="number"
+                value="1000"
+                min="10">
+        </label>
+
+        <button id="runBtn">
+            Run Simulation
+        </button>
+
+    </div>
+
+</section>
+
+<section class="card">
+
+    <h2>Theoretical Distribution</h2>
+
+    <div id="theoryBox"></div>
+
+</section>
+
+<section class="card">
+
+    <h2>Sample Means</h2>
+
+    <div class="chart-grid">
+
+        <div>
+            <h3>n = 20</h3>
+            <canvas id="mean20"></canvas>
+        </div>
+
+        <div>
+            <h3>n = 100</h3>
+            <canvas id="mean100"></canvas>
+        </div>
+
+        <div>
+            <h3>n = 1000</h3>
+            <canvas id="mean1000"></canvas>
+        </div>
+
+    </div>
+
+</section>
+
+<section class="card">
+
+    <h2>Sample Variances</h2>
+
+    <div class="chart-grid">
+
+        <div>
+            <h3>n = 20</h3>
+            <canvas id="var20"></canvas>
+        </div>
+
+        <div>
+            <h3>n = 100</h3>
+            <canvas id="var100"></canvas>
+        </div>
+
+        <div>
+            <h3>n = 1000</h3>
+            <canvas id="var1000"></canvas>
+        </div>
+
+    </div>
+
+</section>
+
+<section id="resultsBox" class="card"></section>
+
+<section id="discussionBox" class="card"></section>
+
+</div>
+
+<script src="homework4.js"></script>
+
+</body>
+
+</html>
