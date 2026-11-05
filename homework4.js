@@ -1,404 +1,292 @@
+"use strict";
+
 const N_VALUES = [20, 100, 1000];
+const THEORETICAL_MEAN = 5;
+const THEORETICAL_VARIANCE = 10;
+const HISTOGRAM_BINS = 28;
 
-const SCORES =
-[
-    0,1,2,3,4,5,6,7,8,9,10
-];
+// Vertical reference line used to mark μ or σ².
+const referenceLinePlugin = {
+    id: "referenceLine",
+    afterDatasetsDraw(chart, args, options) {
+        if (!options || !Number.isFinite(options.value)) return;
 
-const PROB =
-[
-    0.05,
-    0.05,
-    0.08,
-    0.10,
-    0.12,
-    0.20,
-    0.15,
-    0.10,
-    0.08,
-    0.05,
-    0.02
-];
+        const xPixel = chart.scales.x.getPixelForValue(options.value);
+        const { top, bottom } = chart.chartArea;
+        const ctx = chart.ctx;
 
-function theoreticalMean()
-{
-    let mu = 0;
-
-    for(let i=0;i<SCORES.length;i++)
-    {
-        mu += SCORES[i]*PROB[i];
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(xPixel, top);
+        ctx.lineTo(xPixel, bottom);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = options.color || "#d62728";
+        ctx.stroke();
+        ctx.fillStyle = options.color || "#d62728";
+        ctx.font = "12px Arial";
+        ctx.fillText(options.label || "Theory", xPixel + 5, top + 14);
+        ctx.restore();
     }
+};
 
-    return mu;
+Chart.register(referenceLinePlugin);
+
+function average(values) {
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function theoreticalVariance()
-{
-    const mu = theoreticalMean();
-
-    let secondMoment = 0;
-
-    for(let i=0;i<SCORES.length;i++)
-    {
-        secondMoment +=
-            SCORES[i]*
-            SCORES[i]*
-            PROB[i];
-    }
-
-    return secondMoment-mu*mu;
+function empiricalVariance(values) {
+    if (values.length < 2) return 0;
+    const center = average(values);
+    return values.reduce((sum, value) => sum + (value - center) ** 2, 0)
+        / (values.length - 1);
 }
 
-const MU = theoreticalMean();
-const VAR = theoreticalVariance();
-
-function sampleScore()
-{
-    const u = Math.random();
-
-    let cumulative = 0;
-
-    for(let i=0;i<PROB.length;i++)
-    {
-        cumulative += PROB[i];
-
-        if(u <= cumulative)
-        {
-            return SCORES[i];
-        }
-    }
-
-    return 10;
+function sampleScore() {
+    // Math.random() is uniform on [0,1), so this is uniform on {0,...,10}.
+    return Math.floor(Math.random() * 11);
 }
 
-function welford(dataGenerator, n)
-{
-    let mean = 0;
-    let ss = 0;
+function welfordSample(sampleSize) {
     let count = 0;
+    let mean = 0;
+    let M2 = 0;
 
-    for(let i=0;i<n;i++)
-    {
-        const x = dataGenerator();
-
+    for (let i = 0; i < sampleSize; i++) {
+        const x = sampleScore();
         count++;
 
-        const delta =
-            x - mean;
-
-        mean +=
-            delta / count;
-
-        ss +=
-            delta *
-            (x - mean);
+        // Welford's three-line core update.
+        const delta = x - mean;
+        mean += delta / count;
+        M2 += delta * (x - mean);
     }
 
     return {
         mean,
-        variance:
-            ss/(count-1)
+        variance: count > 1 ? M2 / (count - 1) : 0
     };
 }
 
-function histogram(data,bins=25)
-{
-    const min =
-        Math.min(...data);
+function simulateForN(n, hackers) {
+    const means = [];
+    const variances = [];
 
-    const max =
-        Math.max(...data);
-
-    const width =
-        (max-min)/bins || 1;
-
-    const counts =
-        Array(bins).fill(0);
-
-    const labels = [];
-
-    for(let i=0;i<bins;i++)
-    {
-        labels.push(
-            (
-                min +
-                i*width
-            ).toFixed(2)
-        );
+    for (let hacker = 0; hacker < hackers; hacker++) {
+        const statistics = welfordSample(n);
+        means.push(statistics.mean);
+        variances.push(statistics.variance);
     }
 
-    data.forEach(v =>
-    {
-        let idx =
-            Math.floor(
-                (v-min)/width
-            );
+    return { n, means, variances };
+}
 
-        if(idx>=bins)
-        {
-            idx=bins-1;
-        }
-
-        counts[idx]++;
-    });
-
+function paddedRange(values, theoreticalValue, minimumAllowed = -Infinity) {
+    const rawMin = Math.min(...values, theoreticalValue);
+    const rawMax = Math.max(...values, theoreticalValue);
+    const span = rawMax - rawMin || 1;
     return {
-        labels,
-        counts
+        min: Math.max(minimumAllowed, rawMin - 0.08 * span),
+        max: rawMax + 0.08 * span
     };
 }
 
-function drawHistogram(
-    canvasId,
-    values,
-    color
-)
-{
-    const canvas =
-        document.getElementById(
-            canvasId
-        );
+function buildDensityHistogram(values, bins, min, max) {
+    const width = (max - min) / bins;
+    const counts = Array(bins).fill(0);
 
-    const old =
-        Chart.getChart(canvas);
-
-    if(old)
-    {
-        old.destroy();
+    for (const value of values) {
+        let index = Math.floor((value - min) / width);
+        if (index < 0) index = 0;
+        if (index >= bins) index = bins - 1;
+        counts[index]++;
     }
 
-    const h =
-        histogram(values);
+    return counts.map((count, index) => ({
+        x: min + (index + 0.5) * width,
+        y: count / (values.length * width)
+    }));
+}
 
-    new Chart(canvas,
-    {
-        type:"bar",
+function maximumDensity(series, range) {
+    return Math.max(...series.map(values =>
+        Math.max(...buildDensityHistogram(
+            values,
+            HISTOGRAM_BINS,
+            range.min,
+            range.max
+        ).map(point => point.y))
+    ));
+}
 
-        data:
-        {
-            labels:h.labels,
+function drawDensityHistogram(canvasId, values, range, yMax, color, referenceValue, referenceLabel) {
+    const oldChart = Chart.getChart(canvasId);
+    if (oldChart) oldChart.destroy();
 
-            datasets:
-            [{
-                data:h.counts,
-                backgroundColor:color
+    const histogram = buildDensityHistogram(
+        values,
+        HISTOGRAM_BINS,
+        range.min,
+        range.max
+    );
+    const binWidth = (range.max - range.min) / HISTOGRAM_BINS;
+
+    new Chart(document.getElementById(canvasId), {
+        type: "bar",
+        data: {
+            datasets: [{
+                label: "Empirical density",
+                data: histogram,
+                parsing: false,
+                backgroundColor: color,
+                borderColor: color,
+                borderWidth: 1,
+                barPercentage: 1,
+                categoryPercentage: 1,
+                barThickness: "flex"
             }]
         },
-
-        options:
-        {
-            responsive:true,
-
-            plugins:
-            {
-                legend:
-                {
-                    display:false
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+                legend: { display: false },
+                referenceLine: {
+                    value: referenceValue,
+                    label: referenceLabel,
+                    color: "#d62728"
+                },
+                tooltip: {
+                    callbacks: {
+                        title(items) {
+                            const center = items[0].parsed.x;
+                            return `Bin center: ${center.toFixed(3)}`;
+                        },
+                        label(item) {
+                            return `Density: ${item.parsed.y.toFixed(4)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: "linear",
+                    min: range.min,
+                    max: range.max,
+                    offset: false,
+                    title: { display: true, text: "Estimate" },
+                    ticks: { maxTicksLimit: 7 }
+                },
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: yMax * 1.08,
+                    title: { display: true, text: "Density" }
                 }
             }
         }
     });
 }
 
-function simulate()
-{
-    const m =
-        parseInt(
-            document
-            .getElementById(
-                "hackers"
-            ).value
-        );
+function renderResults(results, hackers) {
+    const rows = results.map(result => {
+        const meanOfMeans = average(result.means);
+        const meanOfVariances = average(result.variances);
+        const varianceOfMeans = empiricalVariance(result.means);
+        const sdOfMeans = Math.sqrt(varianceOfMeans);
+        const sdOfVariances = Math.sqrt(empiricalVariance(result.variances));
+        const theoreticalSE = Math.sqrt(THEORETICAL_VARIANCE / result.n);
 
-    const results = [];
+        return `
+            <tr>
+                <td>${result.n}</td>
+                <td>${meanOfMeans.toFixed(5)}</td>
+                <td>${Math.abs(meanOfMeans - THEORETICAL_MEAN).toFixed(5)}</td>
+                <td>${meanOfVariances.toFixed(5)}</td>
+                <td>${Math.abs(meanOfVariances - THEORETICAL_VARIANCE).toFixed(5)}</td>
+                <td>${sdOfMeans.toFixed(5)}</td>
+                <td>${theoreticalSE.toFixed(5)}</td>
+                <td>${sdOfVariances.toFixed(5)}</td>
+            </tr>`;
+    }).join("");
 
-    N_VALUES.forEach(n =>
-    {
-        const means = [];
-        const variances = [];
-
-        for(let i=0;i<m;i++)
-        {
-            const stats =
-                welford(
-                    sampleScore,
-                    n
-                );
-
-            means.push(
-                stats.mean
-            );
-
-            variances.push(
-                stats.variance
-            );
-        }
-
-        results.push({
-            n,
-            means,
-            variances
-        });
-    });
-
-    drawHistogram(
-        "mean20",
-        results[0].means,
-        "#4e79a7"
-    );
-
-    drawHistogram(
-        "mean100",
-        results[1].means,
-        "#f28e2b"
-    );
-
-    drawHistogram(
-        "mean1000",
-        results[2].means,
-        "#59a14f"
-    );
-
-    drawHistogram(
-        "var20",
-        results[0].variances,
-        "#4e79a7"
-    );
-
-    drawHistogram(
-        "var100",
-        results[1].variances,
-        "#f28e2b"
-    );
-
-    drawHistogram(
-        "var1000",
-        results[2].variances,
-        "#59a14f"
-    );
-
-    let html =
-        "<h2>Comparison With Theory</h2>";
-
-    results.forEach(r =>
-    {
-        const meanAvg =
-            r.means.reduce(
-                (a,b)=>a+b,
-                0
-            )/r.means.length;
-
-        const varianceAvg =
-            r.variances.reduce(
-                (a,b)=>a+b,
-                0
-            )/r.variances.length;
-
-        html += `
-        <h3>n=${r.n}</h3>
-
-        <p>
-        Average Sampling Mean:
-        ${meanAvg.toFixed(4)}
-        </p>
-
-        <p>
-        Theoretical Mean:
-        ${MU.toFixed(4)}
-        </p>
-
-        <p>
-        Average Sampling Variance:
-        ${varianceAvg.toFixed(4)}
-        </p>
-
-        <p>
-        Theoretical Variance:
-        ${VAR.toFixed(4)}
-        </p>
-
-        <hr>
-        `;
-    });
-
-    document
-        .getElementById("resultsBox")
-        .innerHTML = html;
-
-    document
-        .getElementById("discussionBox")
-        .innerHTML =
-    `
-    <h2>Discussion</h2>
-
-    <p>
-    The average of the sampling means
-    is very close to the theoretical
-    mean μ.
-    </p>
-
-    <p>
-    The average of the sampling
-    variances is very close to
-    the theoretical variance σ².
-    </p>
-
-    <p>
-    As n increases, the distributions
-    of the sampling means become
-    narrower. This is predicted by
-
-    Var(X̄)=σ²/n.
-    </p>
-
-    <p>
-    The sampling variances also
-    become increasingly concentrated
-    around σ².
-    </p>
-
-    <p>
-    This demonstrates consistency
-    of the estimators and explains
-    why sample statistics can be used
-    to estimate population parameters
-    in inferential statistics.
-    </p>
-    `;
+    document.getElementById("resultsBox").innerHTML = `
+        <h2>Numerical comparison with theory</h2>
+        <p>Results from ${hackers.toLocaleString()} independent hackers for each value of n.</p>
+        <div style="overflow-x:auto">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>n</th>
+                        <th>Average X̄</th>
+                        <th>|Average X̄ - μ|</th>
+                        <th>Average s²</th>
+                        <th>|Average s² - σ²|</th>
+                        <th>Empirical SD(X̄)</th>
+                        <th>Theoretical σ/√n</th>
+                        <th>Empirical SD(s²)</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <p class="good">
+            The relevant comparison is not that every hacker obtains exactly 5 and 10.
+            Rather, the averages across repeated samples should be near 5 and 10, while
+            the variability of the estimators should shrink as n grows.
+        </p>`;
 }
 
-document
-.getElementById(
-    "runBtn"
-)
-.addEventListener(
-    "click",
-    simulate
-);
+function runExperiment() {
+    const input = document.getElementById("hackers");
+    const hackers = Number.parseInt(input.value, 10);
+    const status = document.getElementById("status");
 
-document
-.getElementById(
-    "theoryBox"
-)
-.innerHTML =
-`
-<p>
-μ = ${MU.toFixed(4)}
-</p>
+    if (!Number.isInteger(hackers) || hackers < 10 || hackers > 20000) {
+        status.textContent = "Please choose an integer m between 10 and 20,000.";
+        return;
+    }
 
-<p>
-σ² = ${VAR.toFixed(4)}
-</p>
+    status.textContent = "Running simulation...";
 
-<p>
-Welford Recurrence:
-</p>
+    // Let the browser paint the status message before the CPU-intensive loop.
+    window.setTimeout(() => {
+        const results = N_VALUES.map(n => simulateForN(n, hackers));
+        const colors = ["#4e79a7", "#f28e2b", "#59a14f"];
 
-<pre>
-delta = x - mean
-mean += delta / n
-SS += delta * (x - mean)
-</pre>
-`;
+        const allMeans = results.flatMap(result => result.means);
+        const allVariances = results.flatMap(result => result.variances);
+        const meanRange = paddedRange(allMeans, THEORETICAL_MEAN, 0);
+        const varianceRange = paddedRange(allVariances, THEORETICAL_VARIANCE, 0);
+        const meanYMax = maximumDensity(results.map(result => result.means), meanRange);
+        const varianceYMax = maximumDensity(results.map(result => result.variances), varianceRange);
 
-simulate();
+        results.forEach((result, index) => {
+            drawDensityHistogram(
+                `mean${result.n}`,
+                result.means,
+                meanRange,
+                meanYMax,
+                colors[index],
+                THEORETICAL_MEAN,
+                "μ = 5"
+            );
+
+            drawDensityHistogram(
+                `variance${result.n}`,
+                result.variances,
+                varianceRange,
+                varianceYMax,
+                colors[index],
+                THEORETICAL_VARIANCE,
+                "σ² = 10"
+            );
+        });
+
+        renderResults(results, hackers);
+        status.textContent = "Simulation completed.";
+    }, 20);
+}
+
+document.getElementById("runBtn").addEventListener("click", runExperiment);
+runExperiment();

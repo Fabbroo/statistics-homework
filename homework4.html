@@ -1,118 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Homework 4 - Welford Statistics</title>
-
-<link rel="stylesheet" href="style.css">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 4 - Welford's Algorithm</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .theory-grid, .chart-grid, .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .theory-box, .chart-panel, .summary-card {
+            padding: 16px;
+            border: 1px solid #dfe5ef;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+        .formula {
+            overflow-x: auto;
+            padding: 12px;
+            border-left: 4px solid #1f3c88;
+            background: white;
+            font-family: "Times New Roman", serif;
+            font-size: 1.08rem;
+        }
+        .code-core {
+            padding: 14px;
+            border-radius: 8px;
+            background: #172033;
+            color: #f5f7fb;
+            overflow-x: auto;
+        }
+        .comparison-table { width: 100%; border-collapse: collapse; }
+        .comparison-table th, .comparison-table td {
+            padding: 9px; border: 1px solid #d9deea; text-align: right;
+        }
+        .comparison-table th:first-child, .comparison-table td:first-child { text-align: center; }
+        .good { color: #147a3b; font-weight: bold; }
+        .note { color: #48566a; }
+        .chart-panel canvas { min-height: 280px; }
+        #status { margin-top: 12px; font-weight: bold; }
+    </style>
 </head>
-
 <body>
-
 <div class="container">
+    <h1>Homework 4 - Welford's Recurrence Formulas</h1>
+    <p class="subtitle">Online estimation of sampling means and unbiased sampling variances</p>
 
-<h1>Homework 4 - Welford's Recurrence Formulas</h1>
-
-<div class="navigation">
-    <a href="index.html">Back to Home</a>
-</div>
-
-<section class="card">
-
-    <h2>Simulation Parameters</h2>
-
-    <div class="controls">
-
-        <label>
-            Hackers (m)
-            <input
-                id="hackers"
-                type="number"
-                value="1000"
-                min="10">
-        </label>
-
-        <button id="runBtn">
-            Run Simulation
-        </button>
-
+    <div class="navigation">
+        <a href="index.html">Back to Home</a>
     </div>
 
-</section>
+    <section class="card">
+        <h2>What the experiment studies</h2>
+        <p>
+            Each of <strong>m hackers</strong> attempts to penetrate <strong>n systems</strong>.
+            Every attempt receives an integer score from 0 to 10. For each hacker, the
+            sample mean and sample variance are computed online with Welford's recurrence,
+            without storing the complete trajectory.
+        </p>
+        <p>
+            The experiment is repeated for n = 20, 100, and 1000. Across all hackers, we
+            compare the average sample mean with the theoretical mean μ, and the average
+            unbiased sample variance with the theoretical variance σ².
+        </p>
+    </section>
 
-<section class="card">
+    <section class="card">
+        <h2>Theory</h2>
 
-    <h2>Theoretical Distribution</h2>
+        <div class="theory-grid">
+            <article class="theory-box">
+                <h3>1. Chosen score distribution</h3>
+                <p>The score X is discrete uniform on {0,1,...,10}:</p>
+                <div class="formula">P(X = x) = 1/11, &nbsp; x = 0,1,...,10.</div>
+                <p>Therefore:</p>
+                <div class="formula">
+                    μ = E[X] = 5<br>
+                    σ² = Var(X) = 10
+                </div>
+            </article>
 
-    <div id="theoryBox"></div>
+            <article class="theory-box">
+                <h3>2. Mean recurrence</h3>
+                <p>After observing x<sub>n</sub>, define δ = x<sub>n</sub> - M<sub>n-1</sub>. Then:</p>
+                <div class="formula">
+                    M<sub>n</sub> = M<sub>n-1</sub> + δ/n
+                </div>
+                <p>This is Knuth's online recurrence for the arithmetic mean.</p>
+            </article>
 
-</section>
+            <article class="theory-box">
+                <h3>3. Sum-of-squares recurrence</h3>
+                <p>Let M2<sub>n</sub> be the sum of squared deviations from the current mean:</p>
+                <div class="formula">
+                    M2<sub>n</sub> = Σ<sub>i=1</sub><sup>n</sup>(x<sub>i</sub> - M<sub>n</sub>)²
+                </div>
+                <p>Welford's recurrence is:</p>
+                <div class="formula">
+                    M2<sub>n</sub> = M2<sub>n-1</sub> +
+                    (x<sub>n</sub> - M<sub>n-1</sub>)(x<sub>n</sub> - M<sub>n</sub>)
+                </div>
+            </article>
 
-<section class="card">
-
-    <h2>Sample Means</h2>
-
-    <div class="chart-grid">
-
-        <div>
-            <h3>n = 20</h3>
-            <canvas id="mean20"></canvas>
+            <article class="theory-box">
+                <h3>4. Variance</h3>
+                <div class="formula">
+                    Population-form variance: M2<sub>n</sub>/n<br><br>
+                    Unbiased sample variance: s² = M2<sub>n</sub>/(n-1)
+                </div>
+                <p>
+                    This homework uses the unbiased sample variance because its expected
+                    value is σ² when the observations are IID and n &gt; 1.
+                </p>
+            </article>
         </div>
 
-        <div>
-            <h3>n = 100</h3>
-            <canvas id="mean100"></canvas>
+        <h3>Core Welford update</h3>
+        <pre class="code-core"><code>const delta = x - mean;
+mean += delta / count;
+M2 += delta * (x - mean);</code></pre>
+
+        <h3>Why the M2 recurrence is true</h3>
+        <p>
+            Start from M2<sub>n</sub> = Σ(x<sub>i</sub> - M<sub>n</sub>)². For the first n-1
+            observations, write x<sub>i</sub> - M<sub>n</sub> as
+            (x<sub>i</sub> - M<sub>n-1</sub>) + (M<sub>n-1</sub> - M<sub>n</sub>).
+            When the squares are expanded, the cross term vanishes because
+            Σ<sub>i=1</sub><sup>n-1</sup>(x<sub>i</sub> - M<sub>n-1</sub>) = 0.
+            Substituting M<sub>n</sub> - M<sub>n-1</sub> = δ/n and simplifying gives
+            M2<sub>n</sub> = M2<sub>n-1</sub> + δ(x<sub>n</sub> - M<sub>n</sub>).
+        </p>
+    </section>
+
+    <section class="card">
+        <h2>Simulation controls</h2>
+        <div class="controls">
+            <label for="hackers">Number of hackers m</label>
+            <input id="hackers" type="number" value="2000" min="10" max="20000" step="10">
+            <button id="runBtn" type="button">Run experiment</button>
         </div>
+        <p id="status" aria-live="polite"></p>
+    </section>
 
-        <div>
-            <h3>n = 1000</h3>
-            <canvas id="mean1000"></canvas>
+    <section class="card">
+        <h2>Distribution of the sampling means</h2>
+        <p class="note">
+            The red line marks μ = 5. All three plots use the same x-axis and density scale,
+            so the decreasing variability as n grows is directly visible.
+        </p>
+        <div class="chart-grid">
+            <div class="chart-panel"><h3>n = 20</h3><canvas id="mean20"></canvas></div>
+            <div class="chart-panel"><h3>n = 100</h3><canvas id="mean100"></canvas></div>
+            <div class="chart-panel"><h3>n = 1000</h3><canvas id="mean1000"></canvas></div>
         </div>
+    </section>
 
-    </div>
-
-</section>
-
-<section class="card">
-
-    <h2>Sample Variances</h2>
-
-    <div class="chart-grid">
-
-        <div>
-            <h3>n = 20</h3>
-            <canvas id="var20"></canvas>
+    <section class="card">
+        <h2>Distribution of the sampling variances</h2>
+        <p class="note">
+            The red line marks σ² = 10. The estimator is s² = M2/(n-1), not M2/n.
+        </p>
+        <div class="chart-grid">
+            <div class="chart-panel"><h3>n = 20</h3><canvas id="variance20"></canvas></div>
+            <div class="chart-panel"><h3>n = 100</h3><canvas id="variance100"></canvas></div>
+            <div class="chart-panel"><h3>n = 1000</h3><canvas id="variance1000"></canvas></div>
         </div>
+    </section>
 
-        <div>
-            <h3>n = 100</h3>
-            <canvas id="var100"></canvas>
+    <section id="resultsBox" class="card"></section>
+
+    <section class="card">
+        <h2>Conclusions and inferential interpretation</h2>
+        <div class="summary-grid">
+            <article class="summary-card">
+                <h3>Average of the sample means</h3>
+                <p>
+                    It should be close to μ = 5 because the sample mean is unbiased:
+                    E[X̄] = μ. Increasing n does not change its center, but reduces its
+                    variance to σ²/n = 10/n.
+                </p>
+            </article>
+            <article class="summary-card">
+                <h3>Average of the sample variances</h3>
+                <p>
+                    It should be close to σ² = 10 because division by n-1 makes s² an
+                    unbiased estimator. Individual estimates vary, but their spread
+                    decreases as n increases.
+                </p>
+            </article>
+            <article class="summary-card">
+                <h3>Why this matters</h3>
+                <p>
+                    Inferential statistics uses sample statistics to estimate unknown
+                    population parameters. Larger samples produce more precise estimates,
+                    which leads to smaller standard errors and narrower confidence intervals.
+                </p>
+            </article>
         </div>
-
-        <div>
-            <h3>n = 1000</h3>
-            <canvas id="var1000"></canvas>
-        </div>
-
-    </div>
-
-</section>
-
-<section id="resultsBox" class="card"></section>
-
-<section id="discussionBox" class="card"></section>
-
+    </section>
 </div>
 
 <script src="homework4.js"></script>
-
 </body>
-
 </html>
