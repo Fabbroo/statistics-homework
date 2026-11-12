@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homework 5 - Riemann, Lebesgue Integration and Normal CDF</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.theory-grid,.chart-grid,.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:20px}.theory-box,.chart-panel,.summary-card{padding:16px;border:1px solid #dfe5ef;border-radius:10px;background:#f8fafc}.formula{overflow-x:auto;padding:12px;border-left:4px solid #1f3c88;background:white;font-family:"Times New Roman",serif;font-size:1.08rem}.comparison-table{width:100%;border-collapse:collapse;font-size:.92rem}.comparison-table th,.comparison-table td{padding:8px;border:1px solid #d9deea;text-align:right}.comparison-table th:first-child,.comparison-table td:first-child{text-align:left}.note{color:#48566a}.warning{padding:12px;border-left:4px solid #d97706;background:#fff7ed}.good{color:#147a3b;font-weight:bold}.controls label{font-weight:bold}.controls input,.controls select{padding:8px}.chart-panel canvas{min-height:320px}.small{font-size:.9rem}.code-core{padding:14px;border-radius:8px;background:#172033;color:#f5f7fb;overflow-x:auto}.source-list li{margin-bottom:8px}
+</style>
+</head>
+<body><div class="container">
+<h1>Homework 5 - Numerical Integration</h1>
+<p class="subtitle">Riemann and Lebesgue viewpoints, then numerical computation of the standard normal CDF</p>
+<div class="navigation"><a href="index.html">Back to Home</a></div>
+
+<section class="card"><h2>What the assignment asks us to do</h2>
+<p><strong>Exercise 1</strong> asks for two numerical interpretations of the same integral. The Riemann method divides the <em>domain</em> into vertical strips. The Lebesgue-inspired method divides the <em>range</em> into value layers, estimates the measure of each preimage, and sums “height × measure”. We must compare accuracy, convergence and running time, and include pathological functions.</p>
+<p><strong>Exercise 2</strong> asks for an efficient implementation of the standard normal CDF, a comparison with trusted values, and an explanation of why its integral is not elementary even though it has exact representations through the special function erf.</p></section>
+
+<section class="card"><h2>Theory needed for Exercise 1</h2><div class="theory-grid">
+<article class="theory-box"><h3>Riemann integral</h3><p>For a bounded function on [a,b], divide the domain into n intervals of width Δx. A midpoint sum is</p><div class="formula">R<sub>n</sub> = Σ f(a+(i+1/2)Δx)Δx.</div><p>If these sums approach the same limit as the mesh tends to zero, f is Riemann-integrable. A bounded function is Riemann-integrable exactly when its discontinuities form a set of measure zero.</p></article>
+<article class="theory-box"><h3>Lebesgue integral</h3><p>For a non-negative measurable f, partition its values into bins. If E<sub>j</sub>={x:y<sub>j</sub>≤f(x)&lt;y<sub>j+1</sub>}, then a lower simple-function approximation is</p><div class="formula">L = Σ y<sub>j</sub> μ(E<sub>j</sub>).</div><p>The program estimates μ(E<sub>j</sub>) on a fine domain grid. Refining both the value bins and measurement grid approximates the Lebesgue integral.</p></article>
+<article class="theory-box"><h3>What is being compared</h3><p>The two methods partition different axes. Riemann accuracy depends strongly on variation in x. The layer method depends on value-bin width and on how accurately preimage measures are estimated. For ordinary integrable functions both should converge to the same integral.</p></article>
+<article class="theory-box"><h3>Improper integrals</h3><p>1/√x is unbounded at 0, so it is not Riemann-integrable in the bounded-function sense, but its improper integral exists:</p><div class="formula">∫<sub>0</sub><sup>1</sup>x<sup>-1/2</sup>dx = lim<sub>ε→0+</sub>∫<sub>ε</sub><sup>1</sup>x<sup>-1/2</sup>dx = 2.</div><p>The implementation avoids evaluating the endpoint by using midpoints.</p></article>
+<article class="theory-box"><h3>Dirichlet and Thomae</h3><p>The Dirichlet function 1<sub>Q</sub> is discontinuous everywhere, so it is not Riemann-integrable. Since the rationals are countable and have measure zero, its Lebesgue integral is 0. Thomae's function is continuous at every irrational and discontinuous only at rationals, so it is Riemann-integrable, with integral 0.</p></article>
+<article class="theory-box"><h3>Important numerical warning</h3><p>A computer stores rational floating-point numbers. Naively testing “is x rational?” would therefore return true at every sample and incorrectly give 1 for the Dirichlet function. The code treats the mathematical measure of Q analytically for that example and labels the Riemann result as non-existent.</p></article>
+</div></section>
+
+<section class="card"><h2>Exercise 1 - Numerical experiment</h2>
+<div class="controls"><label>Function <select id="functionSelect"></select></label><label>Resolution n <input id="resolution" type="number" value="1000" min="20" max="200000" step="20"></label><button id="runIntegration" type="button">Run comparison</button></div>
+<p id="integrationStatus" aria-live="polite"></p><div id="functionDescription" class="note"></div>
+<div style="overflow-x:auto"><table class="comparison-table"><thead><tr><th>n</th><th>Riemann midpoint</th><th>Riemann error</th><th>Lebesgue layers</th><th>Lebesgue error</th><th>Riemann time (ms)</th><th>Layer time (ms)</th></tr></thead><tbody id="integrationRows"></tbody></table></div>
+<div class="chart-grid"><div class="chart-panel"><h3>Convergence error</h3><canvas id="errorChart"></canvas></div><div class="chart-panel"><h3>Selected function</h3><canvas id="functionChart"></canvas></div></div>
+<div class="warning"><strong>Interpretation:</strong> the displayed layer method is Lebesgue-inspired, not an exact symbolic Lebesgue integral. It estimates preimage measures from samples and uses lower value-bin representatives. This makes the algorithm observable and comparable, but introduces both sampling error and quantization error.</div></section>
+
+<section class="card"><h2>Exercise 1 - Conclusions</h2><div class="summary-grid">
+<article class="summary-card"><h3>Regular functions</h3><p>For sin(x), x², step functions, |x−0.5| and sin(x)/x, both approaches approach the same exact value. Midpoint Riemann sums are usually more accurate per operation for smooth one-dimensional functions.</p></article>
+<article class="summary-card"><h3>Discontinuities</h3><p>A finite number of jumps does not prevent Riemann integrability. Changing a function at one point, or even on a measure-zero set, does not change its Lebesgue integral and does not change a Riemann integral when integrability is retained.</p></article>
+<article class="summary-card"><h3>Pathological difference</h3><p>Dirichlet's function is the clearest difference: no Riemann integral exists because every interval has infimum 0 and supremum 1, while the Lebesgue integral is 0 because Q has measure zero. Thomae's function is less extreme: it is Riemann- and Lebesgue-integrable, both with value 0.</p></article>
+<article class="summary-card"><h3>Efficiency</h3><p>Both implementations are O(n) for one resolution. The layer method also initializes and processes value bins and needs a reliable range bound. In higher dimensions or for indicator functions, measuring level sets can nevertheless be conceptually or computationally advantageous.</p></article>
+</div></section>
+
+<section class="card"><h2>Theory needed for Exercise 2</h2><div class="theory-grid">
+<article class="theory-box"><h3>Standard normal CDF</h3><div class="formula">Φ(z)=P(Z≤z)=∫<sub>−∞</sub><sup>z</sup>(1/√(2π))e<sup>−t²/2</sup>dt.</div><p>Symmetry gives Φ(−z)=1−Φ(z) and Φ(0)=1/2, so it is enough to compute the integral from 0 to |z|.</p></article>
+<article class="theory-box"><h3>Why no elementary formula?</h3><p>Liouville's theorem on elementary antiderivatives gives a structural criterion for when an elementary function has an elementary primitive. Applied in differential algebra, it shows that e<sup>−x²</sup> has no antiderivative expressible by a finite combination of elementary functions. “No elementary antiderivative” does not mean “no exact definition”.</p></article>
+<article class="theory-box"><h3>Error function</h3><div class="formula">erf(x)=(2/√π)∫<sub>0</sub><sup>x</sup>e<sup>−t²</sup>dt,<br>Φ(z)=½[1+erf(z/√2)].</div><p>erf is a special function introduced precisely to name this non-elementary integral. Computers still need algorithms, such as rational approximations, series or quadrature, to evaluate it.</p></article>
+<article class="theory-box"><h3>Methods implemented</h3><p><strong>Composite Simpson:</strong> high accuracy for smooth integrands. <strong>Power series:</strong> term-by-term integration around 0, useful for moderate |z|. <strong>erf approximation:</strong> a fast closed numerical approximation using a short polynomial and exponential.</p></article>
+</div>
+<pre class="code-core"><code>Φ(z) = 0.5 + sign(z) · ∫₀^{|z|} φ(t) dt
+Simpson: (h/3)[f₀ + fₙ + 4Σf_odd + 2Σf_even]</code></pre></section>
+
+<section class="card"><h2>Exercise 2 - Normal CDF calculator</h2><div class="controls"><label>z <input id="zValue" type="number" value="1.96" step="0.01" min="-8" max="8"></label><label>Simpson intervals <input id="simpsonN" type="number" value="1000" min="2" max="200000" step="2"></label><button id="runCdf" type="button">Compute Φ(z)</button></div><p id="cdfStatus"></p>
+<div style="overflow-x:auto"><table class="comparison-table"><thead><tr><th>z</th><th>Simpson</th><th>Series</th><th>erf approximation</th><th>Trusted reference</th><th>|Simpson-ref|</th><th>Time Simpson (ms)</th></tr></thead><tbody id="cdfRows"></tbody></table></div>
+<p class="note small">The fixed test values are checked against high-precision standard-normal values. The NIST normal table is also linked below; printed tables are rounded, usually to five decimals.</p></section>
+
+<section class="card"><h2>Final evaluation</h2><p>Composite Simpson quadrature is the best transparent general-purpose method here: it converges rapidly because the normal density is smooth. The power series is mathematically direct but suffers from slow convergence and cancellation as |z| becomes large. The erf approximation is fastest and accurate enough for many applications, although a production scientific library would use carefully designed piecewise rational approximations and tail formulas.</p>
+<p>Numerical methods remain necessary because naming the integral erf gives an exact analytical representation but not a finite sequence of elementary arithmetic operations. The special function itself must still be evaluated to a requested precision.</p></section>
+
+<section class="card"><h2>References</h2><ul class="source-list"><li><a href="https://faculty.etsu.edu/gardnerr/4047/notes-Hogg-McKean-Craig/Hogg-McKean-Craig-3-4.pdf" target="_blank" rel="noopener">ETSU notes, Section 3.4: The Normal Distribution</a></li><li><a href="https://www.itl.nist.gov/div898/handbook/eda/section3/eda3671.htm" target="_blank" rel="noopener">NIST/SEMATECH e-Handbook: Standard Normal CDF table</a></li><li>Rudin, <em>Principles of Mathematical Analysis</em>, chapters on Riemann integration and sequences of functions.</li><li>Royden and Fitzpatrick, <em>Real Analysis</em>, chapters on measurable functions and Lebesgue integration.</li></ul></section>
+</div><script src="homework.js"></script></body></html>
