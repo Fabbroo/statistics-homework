@@ -14,12 +14,7 @@
 <h1>Homework 6 - Statistical Independence</h1>
 <p class="subtitle">Contingency tables, marginal and conditional frequencies, expected counts, chi-square test and interpretation</p>
 
-<section class="card"><h2>1. What the professor wants</h2>
-<p>We must start from a bivariate dataset: every observation contains a value of variable <strong>X</strong> and a corresponding value of variable <strong>F</strong>. The purpose is to determine whether knowing one variable changes the distribution of the other.</p>
-<ol class="steps"><li>Choose or enter two categorical variables.</li><li>Build the observed contingency table.</li><li>Calculate absolute, marginal, joint-relative and conditional frequencies.</li><li>Assume independence and compute the expected frequency in every cell.</li><li>Measure the discrepancy between observed and expected frequencies with Pearson's chi-square statistic.</li><li>Optionally compute the p-value and use a significance level such as α = 0.05.</li><li>State whether the data provide evidence of an association, while explaining that association does not establish causality.</li></ol>
-<p>The implementation below includes a complete example about <strong>study method</strong> and <strong>exam outcome</strong>, and also accepts any pasted two-column dataset.</p></section>
-
-<section class="card"><h2>2. Theory required</h2><div class="grid">
+<section class="card"><h2>1. Theory required</h2><div class="grid">
 <article class="box"><h3>Joint and marginal frequencies</h3><p>The observed count <em>O<sub>ij</sub></em> is the number of observations with X in category i and F in category j. Row and column totals are marginal frequencies.</p><div class="formula">n<sub>i·</sub> = Σ<sub>j</sub> O<sub>ij</sub>, &nbsp; n<sub>·j</sub> = Σ<sub>i</sub> O<sub>ij</sub>, &nbsp; n = Σ<sub>i,j</sub> O<sub>ij</sub></div></article>
 <article class="box"><h3>Conditional frequencies</h3><p>A row-conditional frequency describes the distribution of F given X=i. A column-conditional frequency describes X given F=j.</p><div class="formula">P̂(F=j | X=i)=O<sub>ij</sub>/n<sub>i·</sub><br>P̂(X=i | F=j)=O<sub>ij</sub>/n<sub>·j</sub></div></article>
 <article class="box"><h3>Independence</h3><p>In probability, X and F are independent if every joint probability factors into its marginals.</p><div class="formula">P(X=i,F=j)=P(X=i)P(F=j)</div><p>Equivalently, when probabilities are positive, conditioning on X should not change the distribution of F.</p></article>
@@ -29,7 +24,7 @@
 </div>
 <div class="warning"><strong>Conditions:</strong> observations should be independent, categories should be mutually exclusive, and expected counts should normally be at least 5. A common rule is that no expected count is below 1 and at least 80% are at least 5. Sparse tables may require combining defensible categories or using an exact/Monte Carlo method.</div></section>
 
-<section class="card"><h2>3. Complete default worked example</h2>
+<section class="card"><h2>2. Complete example</h2>
 <div class="result good"><strong>No action is required to see the demonstration.</strong> When this page opens, it automatically loads and analyzes a complete dataset containing 36 students. The variables are <em>StudyMethod</em> (Individual, Group, Tutor) and <em>ExamOutcome</em> (Pass, Fail). All tables, the chi-square statistic, p-value, interpretation, assumption check, and charts are generated immediately. The professor can then replace the data and press <em>Analyze data</em> to test another dataset.</div>
 <p>Paste data with exactly two values per line. A header is optional. Commas, semicolons and tabs are accepted. Categories are treated as text. Empty lines are ignored.</p>
 <div class="grid"><div><label for="dataInput"><strong>Bivariate data</strong></label><textarea id="dataInput"></textarea></div><div>
@@ -49,19 +44,7 @@
 <div class="grid"><div class="box"><h3>Observed versus expected</h3><canvas id="comparisonChart"></canvas></div><div class="box"><h3>Conditional distributions</h3><canvas id="conditionalChart"></canvas></div></div>
 </section>
 
-<section class="card"><h2>4. How the implementation works</h2><ol class="steps">
-<li><strong>Parsing:</strong> <code>parseData()</code> determines the separator, removes empty lines, reads the optional header and validates two columns.</li>
-<li><strong>Categories:</strong> unique X and F labels are extracted in their order of appearance.</li>
-<li><strong>Observed counts:</strong> a two-dimensional matrix is initialized to zero, then incremented once per observation.</li>
-<li><strong>Marginals:</strong> row totals, column totals and the grand total are calculated from the observed matrix.</li>
-<li><strong>Derived tables:</strong> the program divides by the grand total for joint-relative frequencies, by row totals for F|X, and by column totals for X|F.</li>
-<li><strong>Independence model:</strong> each expected count is calculated as row total × column total ÷ grand total.</li>
-<li><strong>Test statistic:</strong> every nonzero expected cell contributes (O−E)²/E. Contributions are summed.</li>
-<li><strong>P-value:</strong> the program evaluates the upper tail of the chi-square distribution using a numerical implementation of the regularized incomplete gamma function.</li>
-<li><strong>Interpretation:</strong> the p-value is compared with α and an automatic written conclusion is generated. Assumption warnings are shown when expected frequencies are too small.</li>
-</ol></section>
-
-<section class="card"><h2>5. Interpretation and causality</h2>
+<section class="card"><h2>3. Interpretation and causality</h2>
 <p>If the p-value is smaller than α, the sample is inconsistent with the independence model and we report evidence of a <strong>statistical association</strong>. If it is not smaller, we report that the sample does not provide sufficient evidence to reject independence. We must not write that the variables are “proven independent”.</p>
 <p>A chi-square association is not automatically causal. A third variable may affect both variables, selection bias may distort the sample, the direction of influence may be reversed, or the pattern may be accidental. A causal conclusion normally requires a justified study design, especially random assignment in an experiment, and control of confounding variables.</p></section>
 </main><script src="homework6.js"></script></body></html>
